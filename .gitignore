@@ -12,3 +12,5 @@ depcomp
 install-sh
 ltmain.sh
 missing
+/nacl_build/
+/non_nacl_build/
