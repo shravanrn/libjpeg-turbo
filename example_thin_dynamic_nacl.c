@@ -297,6 +297,7 @@ my_error_exit (j_common_ptr cinfo)
 GLOBAL(int)
 read_JPEG_file (char * filename)
 {
+
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
    */
@@ -401,6 +402,7 @@ read_JPEG_file (char * filename)
      * more than one scanline at a time if that's more convenient.
      */
     (void) jpeg_read_scanlines(&cinfo, buffer, 1);
+    
     /* Assume put_scanline_someplace wants a pointer and sample count. */
     put_scanline_someplace(buffer[0], row_stride);
   }
@@ -458,31 +460,24 @@ read_JPEG_file (char * filename)
  * temporary files are deleted if the program is interrupted.  See libjpeg.txt.
  */
 
-int main(int argc, char** argv)
+int mainFunc(char* input, char* output)
 {
-  if(argc < 3)
+  if(!read_JPEG_file(input))
   {
-    printf("No io files specified. Expected arg example input.jpeg output.jpeg\n");
-    return 1;
-  }
-
-  if(!read_JPEG_file(argv[1]))
-  {
-
     if(image_buffer)
     {
       free(image_buffer);
     }
 
-    printf("Reading file %s failed\n", argv[1]);
+    printf("Reading file %s failed\n", input);
     return 1;
   }
 
   printf("Width: %d, Height: %d\n", image_width, image_height);
 
-  if(!write_JPEG_file(argv[2], 30))
+  if(!write_JPEG_file(output, 30))
   {
-    printf("Writing to file %s failed\n", argv[2]);
+    printf("Writing to file %s failed\n", output);
     return 1; 
   }
 
@@ -490,4 +485,28 @@ int main(int argc, char** argv)
 
   printf("Success\n");
   return 0;
+}
+
+#include <string.h>
+
+char* addTest(char* input, char* output)
+{
+  char* ret = (char *) malloc(strlen(input) + strlen(output) + 1);
+  strcpy(ret, input);
+  strcat(ret, output);
+  //return ret;
+
+  if(!read_JPEG_file(input))
+  {
+    printf("Reading file %s failed\n", input);
+
+    if(image_buffer)
+    {
+      free(image_buffer);
+    }
+
+    return "Fail";
+  }
+
+  return "Success";
 }

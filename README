@@ -3,22 +3,7 @@ My notes
 ==========
 A fork of lib-jpeg turbo to test with building using NaCl
 
-After following pre-reqs in Building.md, build with the following
-
-```
-autoreconf -fiv
-
-mkdir nacl_build
-cd nacl_build
-sh ../configure --host i686-pc-linux-gnu CFLAGS='-O3 -m32' LDFLAGS=-m32 CC=/home/shr/Code/nacl2/native_client/toolchain/linux_x86/nacl_x86_glibc/bin/i686-nacl-gcc
-make
-
-mkdir non_nacl_build
-cd non_nacl_build
-sh ../configure --host i686-pc-linux-gnu CFLAGS='-O3 -m32' LDFLAGS=-m32 CC=gcc
-make
-```
-
+After following pre-reqs in Building.md, follow steps in the file 'buildExample'
 
 
 libjpeg-turbo_nacltests

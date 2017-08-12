@@ -14,3 +14,11 @@ ltmain.sh
 missing
 /nacl_build/
 /non_nacl_build/
+/example_dynamic_nacl
+/example_dynamic_non_nacl
+/example_static
+/example_thin_dynamic_nacl.os
+/example_thin_dynamic_nacl.so
+/example_thin_dynamic_nacl_main
+/example_thin_dynamic_nacl_main.o
+*.o
