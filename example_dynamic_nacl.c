@@ -261,8 +261,7 @@ write_JPEG_file (char * filename, int quality)
    * compression/decompression processes, in existence at once.  We refer
    * to any one struct (and its associated working data) as a "JPEG object".
    */
-  //can use mallocInSandbox/freeInSandbox instead according to preferance
-  struct jpeg_compress_struct* p_cinfo = CREATE_ON_STACK(sandbox, struct jpeg_compress_struct);
+  struct jpeg_compress_struct* p_cinfo = mallocInSandbox(sandbox, sizeof(struct jpeg_compress_struct));
 
   /* This struct represents a JPEG error handler.  It is declared separately
    * because applications often want to supply a specialized error handler
@@ -272,14 +271,12 @@ write_JPEG_file (char * filename, int quality)
    * Note that this struct must live as long as the main JPEG parameter
    * struct, to avoid dangling-pointer problems.
    */
-  //can use mallocInSandbox/freeInSandbox instead according to preferance
-  struct jpeg_error_mgr* p_jerr = CREATE_ON_STACK(sandbox, struct jpeg_error_mgr);
+  struct jpeg_error_mgr* p_jerr = mallocInSandbox(sandbox, sizeof(struct jpeg_error_mgr));
 
   /* More stuff */
   FILE * outfile;               /* target file */
 
-  //can use mallocInSandbox/freeInSandbox instead according to preferance
-  JSAMPROW* p_row_pointer = CREATE_ON_STACK(sandbox, JSAMPROW);
+  JSAMPROW* p_row_pointer = mallocInSandbox(sandbox, sizeof(JSAMPROW));
   //JSAMPROW row_pointer[1];      /* pointer to JSAMPLE row[s] */
 
   int row_stride;               /* physical row width in image buffer */
@@ -366,9 +363,9 @@ write_JPEG_file (char * filename, int quality)
   /* This is an important step since it will release a good deal of memory. */
   d_jpeg_destroy_compress(p_cinfo);
 
-  REMOVE_FROM_STACK(sandbox, struct jpeg_compress_struct);
-  REMOVE_FROM_STACK(sandbox, struct jpeg_error_mgr);
-  REMOVE_FROM_STACK(sandbox, JSAMPROW);
+  freeInSandbox(sandbox, p_cinfo);
+  freeInSandbox(sandbox, p_jerr);
+  freeInSandbox(sandbox, p_row_pointer);
 
   /* And we're done! */
   return 1;
@@ -493,20 +490,17 @@ read_JPEG_file (char * filename)
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
    */
-  //can use mallocInSandbox/freeInSandbox instead according to preferance
-  struct jpeg_decompress_struct* p_cinfo = CREATE_ON_STACK(sandbox, struct jpeg_decompress_struct);
+  struct jpeg_decompress_struct* p_cinfo = mallocInSandbox(sandbox, sizeof(struct jpeg_decompress_struct));
 
   /* We use our private extension JPEG error handler.
    * Note that this struct must live as long as the main JPEG parameter
    * struct, to avoid dangling-pointer problems.
    */
-  //can use mallocInSandbox/freeInSandbox instead according to preferance
-  struct my_error_mgr* p_jerr = CREATE_ON_STACK(sandbox, struct my_error_mgr);
+  struct my_error_mgr* p_jerr = mallocInSandbox(sandbox, sizeof(struct my_error_mgr));
 
   /* More stuff */
   FILE * infile;                /* source file */
-  //can use mallocInSandbox/freeInSandbox instead according to preferance
-  JSAMPARRAY* p_buffer = CREATE_ON_STACK(sandbox, JSAMPARRAY);            /* Output row buffer */
+  JSAMPARRAY* p_buffer = mallocInSandbox(sandbox, sizeof(JSAMPARRAY));            /* Output row buffer */
 
   int row_stride;               /* physical row width in output buffer */
 
@@ -649,9 +643,9 @@ read_JPEG_file (char * filename)
 
   unregisterSandboxCallback(sandbox, slotNumber);
 
-  REMOVE_FROM_STACK(sandbox, JSAMPARRAY);
-  REMOVE_FROM_STACK(sandbox, struct my_error_mgr);
-  REMOVE_FROM_STACK(sandbox, struct jpeg_decompress_struct);
+  freeInSandbox(sandbox, p_cinfo);
+  freeInSandbox(sandbox, p_jerr);
+  freeInSandbox(sandbox, p_buffer);
 
   /* At this point you may want to check to see whether any corrupt-data
    * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
