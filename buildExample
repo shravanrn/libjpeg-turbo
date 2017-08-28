@@ -1,3 +1,5 @@
+# Build libjpeg-turbo
+
 autoreconf -fiv
 
 mkdir nacl_build
@@ -14,6 +16,8 @@ make clean
 make
 cd ..
 
+# Build examples
+
 ############### Static Non NaCl ###############
 gcc -O3 -m32 -mno-align-double -I/home/shr/Code/libjpeg-turbo/non_nacl_build -o example_static example.c /home/shr/Code/libjpeg-turbo/non_nacl_build/.libs/libturbojpeg.a
 
@@ -26,6 +30,9 @@ gcc -c -O3 -m32 -mno-align-double -I/home/shr/Code/libjpeg-turbo/nacl_build -I/h
 g++ -m32 -mno-align-double -o example_dynamic_nacl -Wl,-rpath=/home/shr/Code/nacl2/native_client/scons-out/opt-linux-x86-32/lib -L/home/shr/Code/nacl2/native_client/scons-out/opt-linux-x86-32/lib example_dynamic_nacl.o -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_32 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_32 -lrt -lpthread
 
 ############### Dynamic NaCl - thin ###############
+
+echo "Note - dynamic Nacl - thin is not complete and does not work."
+
 /home/shr/Code/nacl2/native_client/toolchain/linux_x86/nacl_x86_glibc/bin/i686-nacl-gcc -O3 -m32 -mno-align-double -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -fPIC -shared -I/home/shr/Code/libjpeg-turbo/nacl_build -o example_thin_dynamic_nacl.so example_thin_dynamic_nacl.c /home/shr/Code/libjpeg-turbo/nacl_build/.libs/libturbojpeg.a
 
 
@@ -48,4 +55,6 @@ g++ -m32 -mno-align-double -o example_thin_dynamic_nacl_main -Wl,-rpath=/home/sh
 echo Run with './example_static /home/shr/Desktop/test.jpeg /home/shr/Desktop/test_out.jpeg'
 echo Run with './example_dynamic_non_nacl /home/shr/Desktop/test.jpeg /home/shr/Desktop/test_out.jpeg /home/shr/Code/libjpeg-turbo/non_nacl_build/.libs/libjpeg.so'
 echo Run with './example_dynamic_nacl /home/shr/Desktop/test.jpeg /home/shr/Desktop/test_out.jpeg /home/shr/Code/libjpeg-turbo/nacl_build/.libs/libjpeg.so /home/shr/Code/nacl2/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ /home/shr/Code/nacl2/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe'
+
+echo "Note - dynamic Nacl - thin is not complete and does not work."
 echo Run with './example_thin_dynamic_nacl_main /home/shr/Desktop/test.jpeg /home/shr/Desktop/test_out.jpeg /home/shr/Code/libjpeg-turbo/example_thin_dynamic_nacl.so /home/shr/Code/nacl2/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ /home/shr/Code/nacl2/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe'
