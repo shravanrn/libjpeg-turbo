@@ -41,6 +41,29 @@
 //For NaCl sandboxing
 #include "dyn_ldr_lib.h"
 
+#define PRINT_FUNCTION_TIMES
+#ifdef PRINT_FUNCTION_TIMES
+  
+  #include <inttypes.h>
+  #include <chrono>
+  using namespace std::chrono;
+
+  __thread long long timeSpentInJpeg = 0;
+  __thread long long sandboxFuncOrCallbackInvocations = 0;
+  __thread high_resolution_clock::time_point SandboxEnterTime;
+  __thread high_resolution_clock::time_point SandboxExitTime;
+  
+  #define START_TIMER() SandboxEnterTime = high_resolution_clock::now(); \
+    sandboxFuncOrCallbackInvocations++
+
+  #define END_TIMER()   SandboxExitTime = high_resolution_clock::now(); \
+    timeSpentInJpeg+= duration_cast<nanoseconds>(SandboxExitTime - SandboxEnterTime).count()
+
+#else
+  #define START_TIMER() do {} while(0)
+  #define END_TIMER() do {} while(0)
+#endif
+
 /******************** JPEG COMPRESSION SAMPLE INTERFACE *******************/
 
 /* This half of the example shows how to feed data into the JPEG compressor.
@@ -103,123 +126,156 @@ t_jpeg_destroy_decompress ptr_jpeg_destroy_decompress;
 
 struct jpeg_error_mgr * d_jpeg_std_error(struct jpeg_error_mgr * err)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(err), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, struct jpeg_error_mgr *, err);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_std_error);
+  END_TIMER();
   return (struct jpeg_error_mgr *)functionCallReturnPtr(threadData);
 }
 void d_jpeg_CreateCompress(j_compress_ptr cinfo, int version, size_t structsize)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(version) + sizeof(structsize), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, int, version);
   PUSH_VAL_TO_STACK(threadData, size_t, structsize);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_CreateCompress);
+  END_TIMER();
 }
 void d_jpeg_stdio_dest(j_compress_ptr cinfo, FILE * outfile)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(outfile), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   PUSH_PTR_TO_STACK(threadData, FILE *, outfile);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_stdio_dest);
+  END_TIMER();
 }
 void d_jpeg_set_defaults(j_compress_ptr cinfo)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_set_defaults);
+  END_TIMER();
 }
 void d_jpeg_set_quality(j_compress_ptr cinfo, int quality, boolean force_baseline)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(quality) + sizeof(force_baseline), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, int, quality);
   PUSH_VAL_TO_STACK(threadData, boolean, force_baseline);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_set_quality);
+  END_TIMER();
 }
 void d_jpeg_start_compress(j_compress_ptr cinfo, boolean write_all_tables)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(write_all_tables), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, boolean, write_all_tables);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_start_compress);
+  END_TIMER();
 }
 JDIMENSION d_jpeg_write_scanlines(j_compress_ptr cinfo, JSAMPARRAY scanlines, JDIMENSION num_lines)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(scanlines) + sizeof(num_lines), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   PUSH_PTR_TO_STACK(threadData, JSAMPARRAY, scanlines);
   PUSH_VAL_TO_STACK(threadData, JDIMENSION, num_lines);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_write_scanlines);
+  END_TIMER();
   return (JDIMENSION) functionCallReturnRawPrimitiveInt(threadData);
 }
 void d_jpeg_finish_compress(j_compress_ptr cinfo)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_finish_compress);
+  END_TIMER();
 }
 void d_jpeg_destroy_compress(j_compress_ptr cinfo)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_destroy_compress);
+  END_TIMER();
 }
 void d_jpeg_CreateDecompress(j_decompress_ptr cinfo, int version, size_t structsize)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(version) + sizeof(structsize), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, int, version);
   PUSH_VAL_TO_STACK(threadData, size_t, structsize);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_CreateDecompress);
+  END_TIMER();
 }
 void d_jpeg_stdio_src(j_decompress_ptr cinfo, FILE * infile)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(infile), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   PUSH_PTR_TO_STACK(threadData, FILE *, infile);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_stdio_src);
+  END_TIMER();
 }
 int d_jpeg_read_header(j_decompress_ptr cinfo, boolean require_image)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(require_image), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, boolean, require_image);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_read_header);
+  END_TIMER();
   return (int) functionCallReturnRawPrimitiveInt(threadData);
 }
 boolean d_jpeg_start_decompress(j_decompress_ptr cinfo)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_start_decompress);
+  END_TIMER();
   return (boolean) functionCallReturnRawPrimitiveInt(threadData);
 }
 JDIMENSION d_jpeg_read_scanlines(j_decompress_ptr cinfo, JSAMPARRAY scanlines, JDIMENSION max_lines)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(scanlines) + sizeof(max_lines), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   PUSH_PTR_TO_STACK(threadData, JSAMPARRAY, scanlines);
   PUSH_VAL_TO_STACK(threadData, JDIMENSION, max_lines);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_read_scanlines);
+  END_TIMER();
   return (JDIMENSION) functionCallReturnRawPrimitiveInt(threadData);
 }
 boolean d_jpeg_finish_decompress(j_decompress_ptr cinfo)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_finish_decompress);
+  END_TIMER();
   return (boolean) functionCallReturnRawPrimitiveInt(threadData);
 }
 void d_jpeg_destroy_decompress(j_decompress_ptr cinfo)
 {
+  START_TIMER();
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_destroy_decompress);
+  END_TIMER();
 }
 
 JSAMPARRAY d_alloc_sarray(void* alloc_sarray, j_common_ptr cinfo, int pool_id, JDIMENSION samplesperrow, JDIMENSION numrows)
 {
+  //not counted in timer as this function is not counted in the non nacl benchmark
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(pool_id) + sizeof(samplesperrow) + sizeof(numrows), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_common_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, int, pool_id);
@@ -261,7 +317,7 @@ write_JPEG_file (char * filename, int quality)
    * compression/decompression processes, in existence at once.  We refer
    * to any one struct (and its associated working data) as a "JPEG object".
    */
-  struct jpeg_compress_struct* p_cinfo = mallocInSandbox(sandbox, sizeof(struct jpeg_compress_struct));
+  struct jpeg_compress_struct* p_cinfo = (struct jpeg_compress_struct*) mallocInSandbox(sandbox, sizeof(struct jpeg_compress_struct));
 
   /* This struct represents a JPEG error handler.  It is declared separately
    * because applications often want to supply a specialized error handler
@@ -271,12 +327,12 @@ write_JPEG_file (char * filename, int quality)
    * Note that this struct must live as long as the main JPEG parameter
    * struct, to avoid dangling-pointer problems.
    */
-  struct jpeg_error_mgr* p_jerr = mallocInSandbox(sandbox, sizeof(struct jpeg_error_mgr));
+  struct jpeg_error_mgr* p_jerr = (struct jpeg_error_mgr*) mallocInSandbox(sandbox, sizeof(struct jpeg_error_mgr));
 
   /* More stuff */
   FILE * outfile;               /* target file */
 
-  JSAMPROW* p_row_pointer = mallocInSandbox(sandbox, sizeof(JSAMPROW));
+  JSAMPROW* p_row_pointer = (JSAMPROW*) mallocInSandbox(sandbox, sizeof(JSAMPROW));
   //JSAMPROW row_pointer[1];      /* pointer to JSAMPLE row[s] */
 
   int row_stride;               /* physical row width in image buffer */
@@ -490,17 +546,17 @@ read_JPEG_file (char * filename)
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
    */
-  struct jpeg_decompress_struct* p_cinfo = mallocInSandbox(sandbox, sizeof(struct jpeg_decompress_struct));
+  struct jpeg_decompress_struct* p_cinfo = (struct jpeg_decompress_struct*) mallocInSandbox(sandbox, sizeof(struct jpeg_decompress_struct));
 
   /* We use our private extension JPEG error handler.
    * Note that this struct must live as long as the main JPEG parameter
    * struct, to avoid dangling-pointer problems.
    */
-  struct my_error_mgr* p_jerr = mallocInSandbox(sandbox, sizeof(struct my_error_mgr));
+  struct my_error_mgr* p_jerr = (struct my_error_mgr*) mallocInSandbox(sandbox, sizeof(struct my_error_mgr));
 
   /* More stuff */
   FILE * infile;                /* source file */
-  JSAMPARRAY* p_buffer = mallocInSandbox(sandbox, sizeof(JSAMPARRAY));            /* Output row buffer */
+  JSAMPARRAY* p_buffer = (JSAMPARRAY*) mallocInSandbox(sandbox, sizeof(JSAMPARRAY));            /* Output row buffer */
 
   int row_stride;               /* physical row width in output buffer */
 
@@ -802,6 +858,10 @@ int main(int argc, char** argv)
 
   freeInSandbox(sandbox, image_buffer);
   dlcloseInSandbox(sandbox, dlPtr);
+
+  #ifdef PRINT_FUNCTION_TIMES
+    printf("JPEG invocations = %10" PRId64 ", time = %10" PRId64 " ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
+  #endif
 
   printf("Success\n");
   return 0;

@@ -38,6 +38,30 @@
 //For dynamic lib loading
 #include <dlfcn.h>
 
+#define PRINT_FUNCTION_TIMES
+#ifdef PRINT_FUNCTION_TIMES
+  
+  #include <inttypes.h>
+  #include <chrono>
+  using namespace std::chrono;
+
+  __thread long long timeSpentInJpeg = 0;
+  __thread long long sandboxFuncOrCallbackInvocations = 0;
+  __thread high_resolution_clock::time_point SandboxEnterTime;
+  __thread high_resolution_clock::time_point SandboxExitTime;
+  
+  #define START_TIMER() SandboxEnterTime = high_resolution_clock::now(); \
+    sandboxFuncOrCallbackInvocations++
+
+  #define END_TIMER()   SandboxExitTime = high_resolution_clock::now(); \
+    timeSpentInJpeg+= duration_cast<nanoseconds>(SandboxExitTime - SandboxEnterTime).count()
+
+#else
+  #define START_TIMER() do {} while(0)
+  #define END_TIMER() do {} while(0)
+#endif
+
+
 /******************** JPEG COMPRESSION SAMPLE INTERFACE *******************/
 
 /* This half of the example shows how to feed data into the JPEG compressor.
@@ -80,22 +104,126 @@ typedef JDIMENSION (*t_jpeg_read_scanlines) (j_decompress_ptr cinfo, JSAMPARRAY 
 typedef boolean (*t_jpeg_finish_decompress) (j_decompress_ptr cinfo);
 typedef void (*t_jpeg_destroy_decompress) (j_decompress_ptr cinfo);
 
-t_jpeg_std_error d_jpeg_std_error;
-t_jpeg_CreateCompress d_jpeg_CreateCompress;
-t_jpeg_stdio_dest d_jpeg_stdio_dest;
-t_jpeg_set_defaults d_jpeg_set_defaults;
-t_jpeg_set_quality d_jpeg_set_quality;
-t_jpeg_start_compress d_jpeg_start_compress;
-t_jpeg_write_scanlines d_jpeg_write_scanlines;
-t_jpeg_finish_compress d_jpeg_finish_compress;
-t_jpeg_destroy_compress d_jpeg_destroy_compress;
-t_jpeg_CreateDecompress d_jpeg_CreateDecompress;
-t_jpeg_stdio_src d_jpeg_stdio_src;
-t_jpeg_read_header d_jpeg_read_header;
-t_jpeg_start_decompress d_jpeg_start_decompress;
-t_jpeg_read_scanlines d_jpeg_read_scanlines;
-t_jpeg_finish_decompress d_jpeg_finish_decompress;
-t_jpeg_destroy_decompress d_jpeg_destroy_decompress;
+t_jpeg_std_error ptr_jpeg_std_error;
+t_jpeg_CreateCompress ptr_jpeg_CreateCompress;
+t_jpeg_stdio_dest ptr_jpeg_stdio_dest;
+t_jpeg_set_defaults ptr_jpeg_set_defaults;
+t_jpeg_set_quality ptr_jpeg_set_quality;
+t_jpeg_start_compress ptr_jpeg_start_compress;
+t_jpeg_write_scanlines ptr_jpeg_write_scanlines;
+t_jpeg_finish_compress ptr_jpeg_finish_compress;
+t_jpeg_destroy_compress ptr_jpeg_destroy_compress;
+t_jpeg_CreateDecompress ptr_jpeg_CreateDecompress;
+t_jpeg_stdio_src ptr_jpeg_stdio_src;
+t_jpeg_read_header ptr_jpeg_read_header;
+t_jpeg_start_decompress ptr_jpeg_start_decompress;
+t_jpeg_read_scanlines ptr_jpeg_read_scanlines;
+t_jpeg_finish_decompress ptr_jpeg_finish_decompress;
+t_jpeg_destroy_decompress ptr_jpeg_destroy_decompress;
+
+
+struct jpeg_error_mgr * d_jpeg_std_error(struct jpeg_error_mgr * err)
+{
+  START_TIMER();
+  auto ret = ptr_jpeg_std_error(err);
+  END_TIMER();
+  return ret;
+}
+void d_jpeg_CreateCompress(j_compress_ptr cinfo, int version, size_t structsize)
+{
+  START_TIMER();
+  ptr_jpeg_CreateCompress(cinfo, version, structsize);
+  END_TIMER();
+}
+void d_jpeg_stdio_dest(j_compress_ptr cinfo, FILE * outfile)
+{
+  START_TIMER();
+  ptr_jpeg_stdio_dest(cinfo, outfile);
+  END_TIMER();
+}
+void d_jpeg_set_defaults(j_compress_ptr cinfo)
+{
+  START_TIMER();
+  ptr_jpeg_set_defaults(cinfo);
+  END_TIMER();
+}
+void d_jpeg_set_quality(j_compress_ptr cinfo, int quality, boolean force_baseline)
+{
+  START_TIMER();
+  ptr_jpeg_set_quality(cinfo, quality, force_baseline);
+  END_TIMER();
+}
+void d_jpeg_start_compress(j_compress_ptr cinfo, boolean write_all_tables)
+{
+  START_TIMER();
+  ptr_jpeg_start_compress(cinfo, write_all_tables);
+  END_TIMER();
+}
+JDIMENSION d_jpeg_write_scanlines(j_compress_ptr cinfo, JSAMPARRAY scanlines, JDIMENSION num_lines)
+{
+  START_TIMER();
+  auto ret = ptr_jpeg_write_scanlines(cinfo, scanlines, num_lines);
+  END_TIMER();
+  return ret;
+}
+void d_jpeg_finish_compress(j_compress_ptr cinfo)
+{
+  START_TIMER();
+  ptr_jpeg_finish_compress(cinfo);
+  END_TIMER();
+}
+void d_jpeg_destroy_compress(j_compress_ptr cinfo)
+{
+  START_TIMER();
+  ptr_jpeg_destroy_compress(cinfo);
+  END_TIMER();
+}
+void d_jpeg_CreateDecompress(j_decompress_ptr cinfo, int version, size_t structsize)
+{
+  START_TIMER();
+  ptr_jpeg_CreateDecompress(cinfo, version, structsize);
+  END_TIMER();
+}
+void d_jpeg_stdio_src(j_decompress_ptr cinfo, FILE * infile)
+{
+  START_TIMER();
+  ptr_jpeg_stdio_src(cinfo, infile);
+  END_TIMER();
+}
+int d_jpeg_read_header(j_decompress_ptr cinfo, boolean require_image)
+{
+  START_TIMER();
+  auto ret = ptr_jpeg_read_header(cinfo, require_image);
+  END_TIMER();
+  return ret;
+}
+boolean d_jpeg_start_decompress(j_decompress_ptr cinfo)
+{
+  START_TIMER();
+  auto ret = ptr_jpeg_start_decompress(cinfo);
+  END_TIMER();
+  return ret;
+}
+JDIMENSION d_jpeg_read_scanlines(j_decompress_ptr cinfo, JSAMPARRAY scanlines, JDIMENSION max_lines)
+{
+  START_TIMER();
+  auto ret = ptr_jpeg_read_scanlines(cinfo, scanlines, max_lines);
+  END_TIMER();
+  return ret;
+}
+boolean d_jpeg_finish_decompress(j_decompress_ptr cinfo)
+{
+  START_TIMER();
+  auto ret = ptr_jpeg_finish_decompress(cinfo);
+  END_TIMER();
+  return ret;
+}
+void d_jpeg_destroy_decompress(j_decompress_ptr cinfo)
+{
+  START_TIMER();
+  ptr_jpeg_destroy_decompress(cinfo);
+  END_TIMER();
+}
 
 /* extern */JSAMPLE * image_buffer = NULL;  /* Points to large array of R,G,B-order data */
 /* extern */int image_height = 0;        /* Number of rows in image */
@@ -548,22 +676,22 @@ int dynamicLoad(char* path)
 
   if(failed) { return 0; }
 
-  *((void **) &d_jpeg_std_error) = p_jpeg_std_error;
-  *((void **) &d_jpeg_CreateCompress) = p_jpeg_CreateCompress;
-  *((void **) &d_jpeg_stdio_dest) = p_jpeg_stdio_dest;
-  *((void **) &d_jpeg_set_defaults) = p_jpeg_set_defaults;
-  *((void **) &d_jpeg_set_quality) = p_jpeg_set_quality;
-  *((void **) &d_jpeg_start_compress) = p_jpeg_start_compress;
-  *((void **) &d_jpeg_write_scanlines) = p_jpeg_write_scanlines;
-  *((void **) &d_jpeg_finish_compress) = p_jpeg_finish_compress;
-  *((void **) &d_jpeg_destroy_compress) = p_jpeg_destroy_compress;
-  *((void **) &d_jpeg_CreateDecompress) = p_jpeg_CreateDecompress;
-  *((void **) &d_jpeg_stdio_src) = p_jpeg_stdio_src;
-  *((void **) &d_jpeg_read_header) = p_jpeg_read_header;
-  *((void **) &d_jpeg_start_decompress) = p_jpeg_start_decompress;
-  *((void **) &d_jpeg_read_scanlines) = p_jpeg_read_scanlines;
-  *((void **) &d_jpeg_finish_decompress) = p_jpeg_finish_decompress;
-  *((void **) &d_jpeg_destroy_decompress) = p_jpeg_destroy_decompress;
+  *((void **) &ptr_jpeg_std_error) = p_jpeg_std_error;
+  *((void **) &ptr_jpeg_CreateCompress) = p_jpeg_CreateCompress;
+  *((void **) &ptr_jpeg_stdio_dest) = p_jpeg_stdio_dest;
+  *((void **) &ptr_jpeg_set_defaults) = p_jpeg_set_defaults;
+  *((void **) &ptr_jpeg_set_quality) = p_jpeg_set_quality;
+  *((void **) &ptr_jpeg_start_compress) = p_jpeg_start_compress;
+  *((void **) &ptr_jpeg_write_scanlines) = p_jpeg_write_scanlines;
+  *((void **) &ptr_jpeg_finish_compress) = p_jpeg_finish_compress;
+  *((void **) &ptr_jpeg_destroy_compress) = p_jpeg_destroy_compress;
+  *((void **) &ptr_jpeg_CreateDecompress) = p_jpeg_CreateDecompress;
+  *((void **) &ptr_jpeg_stdio_src) = p_jpeg_stdio_src;
+  *((void **) &ptr_jpeg_read_header) = p_jpeg_read_header;
+  *((void **) &ptr_jpeg_start_decompress) = p_jpeg_start_decompress;
+  *((void **) &ptr_jpeg_read_scanlines) = p_jpeg_read_scanlines;
+  *((void **) &ptr_jpeg_finish_decompress) = p_jpeg_finish_decompress;
+  *((void **) &ptr_jpeg_destroy_decompress) = p_jpeg_destroy_decompress;
 
   return 1;
 }
@@ -605,6 +733,10 @@ int main(int argc, char** argv)
 
   free(image_buffer);
   dlclose(dlPtr);
+
+  #ifdef PRINT_FUNCTION_TIMES
+    printf("JPEG invocations = %10" PRId64 ", time = %10" PRId64 " ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
+  #endif
 
   printf("Success\n");
   return 0;
