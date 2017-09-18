@@ -89,7 +89,7 @@
 
 typedef struct jpeg_error_mgr * (*t_jpeg_std_error) (struct jpeg_error_mgr * err);
 typedef void (*t_jpeg_CreateCompress) (j_compress_ptr cinfo, int version, size_t structsize);
-typedef void (*t_jpeg_stdio_dest) (j_compress_ptr cinfo, FILE * outfile);
+typedef void (*t_jpeg_mem_dest) (j_compress_ptr cinfo, unsigned char ** outbuffer, unsigned long * outsize);
 typedef void (*t_jpeg_set_defaults) (j_compress_ptr cinfo);
 typedef void (*t_jpeg_set_quality) (j_compress_ptr cinfo, int quality, boolean force_baseline);
 typedef void (*t_jpeg_start_compress) (j_compress_ptr cinfo, boolean write_all_tables);
@@ -97,7 +97,7 @@ typedef JDIMENSION (*t_jpeg_write_scanlines) (j_compress_ptr cinfo, JSAMPARRAY s
 typedef void (*t_jpeg_finish_compress) (j_compress_ptr cinfo);
 typedef void (*t_jpeg_destroy_compress) (j_compress_ptr cinfo);
 typedef void (*t_jpeg_CreateDecompress) (j_decompress_ptr cinfo, int version, size_t structsize);
-typedef void (*t_jpeg_stdio_src) (j_decompress_ptr cinfo, FILE * infile);
+typedef void (*t_jpeg_mem_src)(j_decompress_ptr cinfo, unsigned char * inbuffer, unsigned long insize);
 typedef int (*t_jpeg_read_header) (j_decompress_ptr cinfo, boolean require_image);
 typedef boolean (*t_jpeg_start_decompress) (j_decompress_ptr cinfo);
 typedef JDIMENSION (*t_jpeg_read_scanlines) (j_decompress_ptr cinfo, JSAMPARRAY scanlines, JDIMENSION max_lines);
@@ -106,7 +106,7 @@ typedef void (*t_jpeg_destroy_decompress) (j_decompress_ptr cinfo);
 
 t_jpeg_std_error ptr_jpeg_std_error;
 t_jpeg_CreateCompress ptr_jpeg_CreateCompress;
-t_jpeg_stdio_dest ptr_jpeg_stdio_dest;
+t_jpeg_mem_dest ptr_jpeg_mem_dest;
 t_jpeg_set_defaults ptr_jpeg_set_defaults;
 t_jpeg_set_quality ptr_jpeg_set_quality;
 t_jpeg_start_compress ptr_jpeg_start_compress;
@@ -114,7 +114,7 @@ t_jpeg_write_scanlines ptr_jpeg_write_scanlines;
 t_jpeg_finish_compress ptr_jpeg_finish_compress;
 t_jpeg_destroy_compress ptr_jpeg_destroy_compress;
 t_jpeg_CreateDecompress ptr_jpeg_CreateDecompress;
-t_jpeg_stdio_src ptr_jpeg_stdio_src;
+t_jpeg_mem_src ptr_jpeg_mem_src;
 t_jpeg_read_header ptr_jpeg_read_header;
 t_jpeg_start_decompress ptr_jpeg_start_decompress;
 t_jpeg_read_scanlines ptr_jpeg_read_scanlines;
@@ -135,10 +135,10 @@ void d_jpeg_CreateCompress(j_compress_ptr cinfo, int version, size_t structsize)
   ptr_jpeg_CreateCompress(cinfo, version, structsize);
   END_TIMER();
 }
-void d_jpeg_stdio_dest(j_compress_ptr cinfo, FILE * outfile)
+void d_jpeg_mem_dest(j_compress_ptr cinfo, unsigned char ** outbuffer, unsigned long * outsize)
 {
   START_TIMER();
-  ptr_jpeg_stdio_dest(cinfo, outfile);
+  ptr_jpeg_mem_dest(cinfo, outbuffer, outsize);
   END_TIMER();
 }
 void d_jpeg_set_defaults(j_compress_ptr cinfo)
@@ -184,10 +184,10 @@ void d_jpeg_CreateDecompress(j_decompress_ptr cinfo, int version, size_t structs
   ptr_jpeg_CreateDecompress(cinfo, version, structsize);
   END_TIMER();
 }
-void d_jpeg_stdio_src(j_decompress_ptr cinfo, FILE * infile)
+void d_jpeg_mem_src(j_decompress_ptr cinfo, unsigned char * inbuffer, unsigned long insize)
 {
   START_TIMER();
-  ptr_jpeg_stdio_src(cinfo, infile);
+  ptr_jpeg_mem_src(cinfo, inbuffer, insize);
   END_TIMER();
 }
 int d_jpeg_read_header(j_decompress_ptr cinfo, boolean require_image)
@@ -295,7 +295,10 @@ write_JPEG_file (char * filename, int quality)
     fprintf(stderr, "can't open %s\n", filename);
     return 0;
   }
-  d_jpeg_stdio_dest(&cinfo, outfile);
+  unsigned char * outbuffer = 0;
+  unsigned long outsize = 0;
+  d_jpeg_mem_dest(&cinfo, &outbuffer, &outsize);
+
 
   /* Step 3: set parameters for compression */
 
@@ -346,6 +349,7 @@ write_JPEG_file (char * filename, int quality)
 
   d_jpeg_finish_compress(&cinfo);
   /* After finish_compress, we can close the output file. */
+  fwrite(outbuffer, outsize, 1, outfile);
   fclose(outfile);
 
   /* Step 7: release JPEG compression object */
@@ -508,7 +512,19 @@ read_JPEG_file (char * filename)
 
   /* Step 2: specify data source (eg, a file) */
 
-  d_jpeg_stdio_src(&cinfo, infile);
+  fseek(infile, 0, SEEK_END);
+  unsigned long fsize = ftell(infile);
+  fseek(infile, 0, SEEK_SET);  //same as rewind(infile);
+
+  unsigned char *fileBuff = (unsigned char *) malloc(fsize + 1);
+  if(!fread(fileBuff, fsize, 1, infile))
+  {
+    return 1;
+  }
+
+  fileBuff[fsize] = 0;
+
+  d_jpeg_mem_src(&cinfo, fileBuff, fsize);
 
   /* Step 3: read file parameters with jpeg_read_header() */
 
@@ -641,7 +657,7 @@ int dynamicLoad(char* path)
 
   void* p_jpeg_std_error = dlsym(dlPtr, "jpeg_std_error");
   void* p_jpeg_CreateCompress = dlsym(dlPtr, "jpeg_CreateCompress");
-  void* p_jpeg_stdio_dest = dlsym(dlPtr, "jpeg_stdio_dest");
+  void* p_jpeg_mem_dest = dlsym(dlPtr, "jpeg_mem_dest");
   void* p_jpeg_set_defaults = dlsym(dlPtr, "jpeg_set_defaults");
   void* p_jpeg_set_quality = dlsym(dlPtr, "jpeg_set_quality");
   void* p_jpeg_start_compress = dlsym(dlPtr, "jpeg_start_compress");
@@ -649,7 +665,7 @@ int dynamicLoad(char* path)
   void* p_jpeg_finish_compress = dlsym(dlPtr, "jpeg_finish_compress");
   void* p_jpeg_destroy_compress = dlsym(dlPtr, "jpeg_destroy_compress");
   void* p_jpeg_CreateDecompress = dlsym(dlPtr, "jpeg_CreateDecompress");
-  void* p_jpeg_stdio_src = dlsym(dlPtr, "jpeg_stdio_src");
+  void* p_jpeg_mem_src = dlsym(dlPtr, "jpeg_mem_src");
   void* p_jpeg_read_header = dlsym(dlPtr, "jpeg_read_header");
   void* p_jpeg_start_decompress = dlsym(dlPtr, "jpeg_start_decompress");
   void* p_jpeg_read_scanlines = dlsym(dlPtr, "jpeg_read_scanlines");
@@ -659,7 +675,7 @@ int dynamicLoad(char* path)
   int failed = 0;
   if(p_jpeg_std_error == NULL) { printf("Symbol resolution failed for jpeg_std_error\n"); failed = 1; }
   if(p_jpeg_CreateCompress == NULL) { printf("Symbol resolution failed for jpeg_CreateCompress\n"); failed = 1; }
-  if(p_jpeg_stdio_dest == NULL) { printf("Symbol resolution failed for jpeg_stdio_dest\n"); failed = 1; }
+  if(p_jpeg_mem_dest == NULL) { printf("Symbol resolution failed for jpeg_mem_dest\n"); failed = 1; }
   if(p_jpeg_set_defaults == NULL) { printf("Symbol resolution failed for jpeg_set_defaults\n"); failed = 1; }
   if(p_jpeg_set_quality == NULL) { printf("Symbol resolution failed for jpeg_set_quality\n"); failed = 1; }
   if(p_jpeg_start_compress == NULL) { printf("Symbol resolution failed for jpeg_start_compress\n"); failed = 1; }
@@ -667,7 +683,7 @@ int dynamicLoad(char* path)
   if(p_jpeg_finish_compress == NULL) { printf("Symbol resolution failed for jpeg_finish_compress\n"); failed = 1; }
   if(p_jpeg_destroy_compress == NULL) { printf("Symbol resolution failed for jpeg_destroy_compress\n"); failed = 1; }
   if(p_jpeg_CreateDecompress == NULL) { printf("Symbol resolution failed for jpeg_CreateDecompress\n"); failed = 1; }
-  if(p_jpeg_stdio_src == NULL) { printf("Symbol resolution failed for jpeg_stdio_src\n"); failed = 1; }
+  if(p_jpeg_mem_src == NULL) { printf("Symbol resolution failed for jpeg_mem_src\n"); failed = 1; }
   if(p_jpeg_read_header == NULL) { printf("Symbol resolution failed for jpeg_read_header\n"); failed = 1; }
   if(p_jpeg_start_decompress == NULL) { printf("Symbol resolution failed for jpeg_start_decompress\n"); failed = 1; }
   if(p_jpeg_read_scanlines == NULL) { printf("Symbol resolution failed for jpeg_read_scanlines\n"); failed = 1; }
@@ -678,7 +694,7 @@ int dynamicLoad(char* path)
 
   *((void **) &ptr_jpeg_std_error) = p_jpeg_std_error;
   *((void **) &ptr_jpeg_CreateCompress) = p_jpeg_CreateCompress;
-  *((void **) &ptr_jpeg_stdio_dest) = p_jpeg_stdio_dest;
+  *((void **) &ptr_jpeg_mem_dest) = p_jpeg_mem_dest;
   *((void **) &ptr_jpeg_set_defaults) = p_jpeg_set_defaults;
   *((void **) &ptr_jpeg_set_quality) = p_jpeg_set_quality;
   *((void **) &ptr_jpeg_start_compress) = p_jpeg_start_compress;
@@ -686,7 +702,7 @@ int dynamicLoad(char* path)
   *((void **) &ptr_jpeg_finish_compress) = p_jpeg_finish_compress;
   *((void **) &ptr_jpeg_destroy_compress) = p_jpeg_destroy_compress;
   *((void **) &ptr_jpeg_CreateDecompress) = p_jpeg_CreateDecompress;
-  *((void **) &ptr_jpeg_stdio_src) = p_jpeg_stdio_src;
+  *((void **) &ptr_jpeg_mem_src) = p_jpeg_mem_src;
   *((void **) &ptr_jpeg_read_header) = p_jpeg_read_header;
   *((void **) &ptr_jpeg_start_decompress) = p_jpeg_start_decompress;
   *((void **) &ptr_jpeg_read_scanlines) = p_jpeg_read_scanlines;

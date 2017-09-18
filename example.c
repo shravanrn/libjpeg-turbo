@@ -128,7 +128,11 @@ write_JPEG_file (char * filename, int quality)
     fprintf(stderr, "can't open %s\n", filename);
     return 0;
   }
-  jpeg_stdio_dest(&cinfo, outfile);
+  unsigned char * outbuffer = 0;
+  unsigned long outsize = 0;
+  jpeg_mem_dest(&cinfo, &outbuffer, &outsize);
+
+  //jpeg_stdio_dest(&cinfo, outfile);
 
   /* Step 3: set parameters for compression */
 
@@ -174,11 +178,12 @@ write_JPEG_file (char * filename, int quality)
     row_pointer[0] = & image_buffer[cinfo.next_scanline * row_stride];
     (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
   }
-
   /* Step 6: Finish compression */
 
   jpeg_finish_compress(&cinfo);
+
   /* After finish_compress, we can close the output file. */
+  fwrite(outbuffer, outsize, 1, outfile);
   fclose(outfile);
 
   /* Step 7: release JPEG compression object */
@@ -341,7 +346,20 @@ read_JPEG_file (char * filename)
 
   /* Step 2: specify data source (eg, a file) */
 
-  jpeg_stdio_src(&cinfo, infile);
+  fseek(infile, 0, SEEK_END);
+  unsigned long fsize = ftell(infile);
+  fseek(infile, 0, SEEK_SET);  //same as rewind(infile);
+
+  unsigned char *fileBuff = malloc(fsize + 1);
+  if(!fread(fileBuff, fsize, 1, infile))
+  {
+    return 1;
+  }
+
+  fileBuff[fsize] = 0;
+
+  jpeg_mem_src(&cinfo, fileBuff, fsize);
+  //jpeg_stdio_src(&cinfo, infile);
 
   /* Step 3: read file parameters with jpeg_read_header() */
 

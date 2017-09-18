@@ -1,0 +1,26 @@
+if [ -z "$1" ]; then 
+	echo "Expected argument ./runPerfTest outputfile.txt"; 
+	exit 1; 
+fi
+
+sudo echo "Starting"
+
+echo -e "\nNon Nacl\n" >> "$1"
+sleep 5
+sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
+sudo perf stat -d -d -d --cpu=3 -o benchmark_perf.txt taskset -c 3 ./example_dynamic_non_nacl ./test.jpeg ./test_out.jpeg ./non_nacl_build/.libs/libjpeg.so >> "$1"
+echo -e "\n" >> "$1"
+cat benchmark_perf.txt >> "$1"
+rm -f benchmark_perf.txt
+
+sleep 5
+
+echo -e "Nacl\n" >> "$1"
+sleep 5
+sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
+sudo perf stat -d -d -d --cpu=3 -o benchmark_perf.txt taskset -c 3 ./example_dynamic_nacl ./test.jpeg ./test_out.jpeg ./nacl_build/.libs/libjpeg.so /home/shr/Code/nacl2/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ /home/shr/Code/nacl2/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe >> "$1"
+echo -e "\n" >> "$1"
+cat benchmark_perf.txt >> "$1"
+rm -f benchmark_perf.txt
+
+echo "Output results to $1"

@@ -5,6 +5,9 @@ A fork of lib-jpeg turbo to test with building using NaCl
 
 After following pre-reqs in Building.md, follow steps in the file 'buildExample'
 
+A script for perf testing is found in 'runPerfTest'
+
+==========================================
 
 libjpeg-turbo_nacltests
 
