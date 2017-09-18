@@ -270,7 +270,7 @@ void put_scanline_someplace(JSAMPROW rowBuffer, int row_stride)
  */
 
 int
-write_JPEG_file (char * filename, int quality)
+write_JPEG_file (unsigned char ** p_outbuffer, unsigned long * p_outsize, int quality)
 {
   /* This struct contains the JPEG compression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -290,7 +290,7 @@ write_JPEG_file (char * filename, int quality)
    */
   struct jpeg_error_mgr jerr;
   /* More stuff */
-  FILE * outfile;               /* target file */
+ 
   JSAMPROW row_pointer[1];      /* pointer to JSAMPLE row[s] */
   int row_stride;               /* physical row width in image buffer */
 
@@ -313,15 +313,8 @@ write_JPEG_file (char * filename, int quality)
    * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
    * requires it in order to write binary files.
    */
-  END_OUTER_TIMER();
-  if ((outfile = fopen(filename, "wb")) == NULL) {
-    fprintf(stderr, "can't open %s\n", filename);
-    return 0;
-  }
-  START_OUTER_TIMER();
-  unsigned char * outbuffer = 0;
-  unsigned long outsize = 0;
-  d_jpeg_mem_dest(&cinfo, &outbuffer, &outsize);
+
+  d_jpeg_mem_dest(&cinfo, p_outbuffer, p_outsize);
 
 
   /* Step 3: set parameters for compression */
@@ -373,10 +366,6 @@ write_JPEG_file (char * filename, int quality)
 
   d_jpeg_finish_compress(&cinfo);
   /* After finish_compress, we can close the output file. */
-  END_OUTER_TIMER();
-  fwrite(outbuffer, outsize, 1, outfile);
-  fclose(outfile);
-  START_OUTER_TIMER();
 
   /* Step 7: release JPEG compression object */
 
@@ -493,7 +482,7 @@ my_error_exit (j_common_ptr cinfo)
 
 
 GLOBAL(int)
-read_JPEG_file (char * filename)
+read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -506,7 +495,6 @@ read_JPEG_file (char * filename)
    */
   struct my_error_mgr jerr;
   /* More stuff */
-  FILE * infile;                /* source file */
   JSAMPARRAY buffer;            /* Output row buffer */
   int row_stride;               /* physical row width in output buffer */
 
@@ -515,13 +503,6 @@ read_JPEG_file (char * filename)
    * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
    * requires it in order to read binary files.
    */
-
-  END_OUTER_TIMER();
-  if ((infile = fopen(filename, "rb")) == NULL) {
-    fprintf(stderr, "can't open %s\n", filename);
-    return 0;
-  }
-  START_OUTER_TIMER();
 
   /* Step 1: allocate and initialize JPEG decompression object */
 
@@ -534,26 +515,12 @@ read_JPEG_file (char * filename)
      * We need to clean up the JPEG object, close the input file, and return.
      */
     d_jpeg_destroy_decompress(&cinfo);
-    fclose(infile);
     return 0;
   }
   /* Now we can initialize the JPEG decompression object. */
   d_jpeg_CreateDecompress(&cinfo, JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_decompress_struct));
 
   /* Step 2: specify data source (eg, a file) */
-  END_OUTER_TIMER();
-  fseek(infile, 0, SEEK_END);
-  unsigned long fsize = ftell(infile);
-  fseek(infile, 0, SEEK_SET);  //same as rewind(infile);
-
-  unsigned char *fileBuff = (unsigned char *) malloc(fsize + 1);
-  if(!fread(fileBuff, fsize, 1, infile))
-  {
-    return 1;
-  }
-
-  fileBuff[fsize] = 0;
-  START_OUTER_TIMER();
 
   d_jpeg_mem_src(&cinfo, fileBuff, fsize);
 
@@ -636,9 +603,6 @@ read_JPEG_file (char * filename)
    * so as to simplify the setjmp error logic above.  (Actually, I don't
    * think that jpeg_destroy can do an error exit, but why assume anything...)
    */
-  END_OUTER_TIMER();
-  fclose(infile);
-  START_OUTER_TIMER();
 
   /* At this point you may want to check to see whether any corrupt-data
    * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
@@ -763,7 +727,36 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  if(!read_JPEG_file(argv[1]))
+  FILE* infile;
+  if ((infile = fopen(argv[1], "rb")) == NULL) {
+    fprintf(stderr, "can't open %s\n", argv[1]);
+    return 1;
+  }
+
+  fseek(infile, 0, SEEK_END);
+  unsigned long fsize = ftell(infile);
+  fseek(infile, 0, SEEK_SET);  //same as rewind(infile);
+
+  unsigned char *fileBuff = (unsigned char *) malloc(fsize + 1);
+  if(!fread(fileBuff, fsize, 1, infile))
+  {
+    return 1;
+  }
+
+  fileBuff[fsize] = 0;
+
+  FILE * outfile;
+  if ((outfile = fopen(argv[2], "wb")) == NULL) {
+    fprintf(stderr, "can't open %s\n", argv[2]);
+    return 0;
+  }
+
+  unsigned char ** p_outbuffer = (unsigned char **) malloc(sizeof(unsigned char *));
+  unsigned long * p_outsize = (unsigned long *) malloc(sizeof(unsigned long));
+  *p_outbuffer = 0;
+  *p_outsize = 0;
+
+  if(!read_JPEG_file(fileBuff, fsize))
   {
     if(image_buffer)
     {
@@ -776,7 +769,7 @@ int main(int argc, char** argv)
 
   printf("Width: %d, Height: %d\n", image_width, image_height);
 
-  if(!write_JPEG_file(argv[2], 30))
+  if(!write_JPEG_file(p_outbuffer, p_outsize, 30))
   {
     printf("Writing to file %s failed\n", argv[2]);
     return 1; 
@@ -785,11 +778,18 @@ int main(int argc, char** argv)
   free(image_buffer);
   dlclose(dlPtr);
 
+  fwrite(*p_outbuffer, *p_outsize, 1, outfile);
+  fclose(outfile);
+  fclose(infile);
+  free(fileBuff);
+  free(p_outbuffer);
+  free(p_outsize);
+  END_PROGRAM_TIMER();
+
 
   #ifdef PRINT_FUNCTION_TIMES
     printf("JPEG invocations = %10" PRId64 ", time = %10" PRId64 " ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
     printf("JPEG total time = %10" PRId64 " ns\n", timeSpentOutsideJpeg);
-    END_PROGRAM_TIMER();
     printf("JPEG program time = %10" PRId64 " ns\n", programTime);
   #endif
 

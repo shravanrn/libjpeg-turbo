@@ -331,7 +331,7 @@ void put_scanline_someplace(JSAMPROW rowBuffer, int row_stride)
  */
 
 int
-write_JPEG_file (char * filename, int quality)
+write_JPEG_file (unsigned char ** p_outbuffer, unsigned long * p_outsize, int quality)
 {
   /* This struct contains the JPEG compression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -353,7 +353,6 @@ write_JPEG_file (char * filename, int quality)
   struct jpeg_error_mgr* p_jerr = (struct jpeg_error_mgr*) mallocInSandbox(sandbox, sizeof(struct jpeg_error_mgr));
 
   /* More stuff */
-  FILE * outfile;               /* target file */
 
   JSAMPROW* p_row_pointer = (JSAMPROW*) mallocInSandbox(sandbox, sizeof(JSAMPROW));
   //JSAMPROW row_pointer[1];      /* pointer to JSAMPLE row[s] */
@@ -379,17 +378,6 @@ write_JPEG_file (char * filename, int quality)
    * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
    * requires it in order to write binary files.
    */
-  END_OUTER_TIMER();
-  if ((outfile = fopen(filename, "wb")) == NULL) {
-    fprintf(stderr, "can't open %s\n", filename);
-    return 0;
-  }
-  START_OUTER_TIMER();
-
-  unsigned char ** p_outbuffer = (unsigned char **) mallocInSandbox(sandbox, sizeof(unsigned char *));
-  unsigned long * p_outsize = (unsigned long *) mallocInSandbox(sandbox, sizeof(unsigned long));
-  *p_outbuffer = 0;
-  *p_outsize = 0;
 
   d_jpeg_mem_dest(p_cinfo, p_outbuffer, p_outsize);
 
@@ -443,19 +431,12 @@ write_JPEG_file (char * filename, int quality)
 
   d_jpeg_finish_compress(p_cinfo);
   /* After finish_compress, we can close the output file. */
-  unsigned char * outbuffer = (unsigned char *) getUnsandboxedAddress(sandbox, (uintptr_t) *p_outbuffer);
-  END_OUTER_TIMER();
-  fwrite(outbuffer, *p_outsize, 1, outfile);
-  fclose(outfile);
-  START_OUTER_TIMER();
 
   /* Step 7: release JPEG compression object */
 
   /* This is an important step since it will release a good deal of memory. */
   d_jpeg_destroy_compress(p_cinfo);
 
-  freeInSandbox(sandbox, p_outbuffer);
-  freeInSandbox(sandbox, p_outsize);
   freeInSandbox(sandbox, p_cinfo);
   freeInSandbox(sandbox, p_jerr);
   freeInSandbox(sandbox, p_row_pointer);
@@ -579,7 +560,7 @@ SANDBOX_CALLBACK void my_error_exit_stub(uintptr_t sandboxPtr)
 
 
 GLOBAL(int)
-read_JPEG_file (char * filename)
+read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -594,7 +575,6 @@ read_JPEG_file (char * filename)
   struct my_error_mgr* p_jerr = (struct my_error_mgr*) mallocInSandbox(sandbox, sizeof(struct my_error_mgr));
 
   /* More stuff */
-  FILE * infile;                /* source file */
   JSAMPARRAY* p_buffer = (JSAMPARRAY*) mallocInSandbox(sandbox, sizeof(JSAMPARRAY));            /* Output row buffer */
 
   int row_stride;               /* physical row width in output buffer */
@@ -604,12 +584,6 @@ read_JPEG_file (char * filename)
    * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
    * requires it in order to read binary files.
    */
-  END_OUTER_TIMER();
-  if ((infile = fopen(filename, "rb")) == NULL) {
-    fprintf(stderr, "can't open %s\n", filename);
-    return 0;
-  }
-  START_OUTER_TIMER();
 
   /* Step 1: allocate and initialize JPEG decompression object */
 
@@ -635,27 +609,12 @@ read_JPEG_file (char * filename)
      * We need to clean up the JPEG object, close the input file, and return.
      */
     d_jpeg_destroy_decompress(p_cinfo);
-    fclose(infile);
     return 0;
   }
   /* Now we can initialize the JPEG decompression object. */
   d_jpeg_CreateDecompress(p_cinfo, JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_decompress_struct));
 
   /* Step 2: specify data source (eg, a file) */
-  END_OUTER_TIMER();
-  fseek(infile, 0, SEEK_END);
-  unsigned long fsize = ftell(infile);
-  fseek(infile, 0, SEEK_SET);  //same as rewind(infile);
-
-  unsigned char *fileBuff = (unsigned char *) mallocInSandbox(sandbox, fsize + 1);
-  if(!fread(fileBuff, fsize, 1, infile))
-  {
-    return 1;
-  }
-
-  fileBuff[fsize] = 0;
-  START_OUTER_TIMER();
-
   d_jpeg_mem_src(p_cinfo, fileBuff, fsize);
 
   /* Step 3: read file parameters with jpeg_read_header() */
@@ -746,13 +705,9 @@ read_JPEG_file (char * filename)
    * so as to simplify the setjmp error logic above.  (Actually, I don't
    * think that jpeg_destroy can do an error exit, but why assume anything...)
    */
-  END_OUTER_TIMER();
-  fclose(infile);
-  START_OUTER_TIMER();
 
   unregisterSandboxCallback(sandbox, slotNumber);
 
-  freeInSandbox(sandbox, fileBuff);
   freeInSandbox(sandbox, p_cinfo);
   freeInSandbox(sandbox, p_jerr);
   freeInSandbox(sandbox, p_buffer);
@@ -895,7 +850,36 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  if(!read_JPEG_file(argv[1]))
+  FILE* infile;
+  if ((infile = fopen(argv[1], "rb")) == NULL) {
+    fprintf(stderr, "can't open %s\n", argv[1]);
+    return 1;
+  }
+
+  fseek(infile, 0, SEEK_END);
+  unsigned long fsize = ftell(infile);
+  fseek(infile, 0, SEEK_SET);  //same as rewind(infile);
+
+  unsigned char *fileBuff = (unsigned char *) mallocInSandbox(sandbox, fsize + 1);
+  if(!fread(fileBuff, fsize, 1, infile))
+  {
+    return 1;
+  }
+
+  fileBuff[fsize] = 0;
+
+  FILE * outfile;
+  if ((outfile = fopen(argv[2], "wb")) == NULL) {
+    fprintf(stderr, "can't open %s\n", argv[2]);
+    return 0;
+  }
+
+  unsigned char ** p_outbuffer = (unsigned char **) mallocInSandbox(sandbox, sizeof(unsigned char *));
+  unsigned long * p_outsize = (unsigned long *) mallocInSandbox(sandbox, sizeof(unsigned long));
+  *p_outbuffer = 0;
+  *p_outsize = 0;
+
+  if(!read_JPEG_file(fileBuff, fsize))
   {
     if(image_buffer)
     {
@@ -908,7 +892,7 @@ int main(int argc, char** argv)
 
   printf("Width: %d, Height: %d\n", image_width, image_height);
 
-  if(!write_JPEG_file(argv[2], 30))
+  if(!write_JPEG_file(p_outbuffer, p_outsize, 30))
   {
     printf("Writing to file %s failed\n", argv[2]);
     return 1; 
@@ -916,6 +900,14 @@ int main(int argc, char** argv)
 
   freeInSandbox(sandbox, image_buffer);
   dlcloseInSandbox(sandbox, dlPtr);
+
+  fwrite(*p_outbuffer, *p_outsize, 1, outfile);
+  fclose(outfile);
+  fclose(infile);
+  freeInSandbox(sandbox, fileBuff);
+  freeInSandbox(sandbox, p_outbuffer);
+  freeInSandbox(sandbox, p_outsize);
+  END_PROGRAM_TIMER();
 
 
   #ifdef PRINT_FUNCTION_TIMES
