@@ -52,6 +52,14 @@
   __thread long long sandboxFuncOrCallbackInvocations = 0;
   __thread high_resolution_clock::time_point SandboxEnterTime;
   __thread high_resolution_clock::time_point SandboxExitTime;
+
+  long long timeSpentOutsideJpeg = 0;
+  high_resolution_clock::time_point OuterEnterTime;
+  high_resolution_clock::time_point OuterExitTime;
+
+  long long programTime = 0;
+  high_resolution_clock::time_point ProgramEnterTime;
+  high_resolution_clock::time_point ProgramExitTime;
   
   #define START_TIMER() SandboxEnterTime = high_resolution_clock::now(); \
     sandboxFuncOrCallbackInvocations++
@@ -59,9 +67,21 @@
   #define END_TIMER()   SandboxExitTime = high_resolution_clock::now(); \
     timeSpentInJpeg+= duration_cast<nanoseconds>(SandboxExitTime - SandboxEnterTime).count()
 
+  #define START_OUTER_TIMER() OuterEnterTime = high_resolution_clock::now()
+  #define END_OUTER_TIMER()   OuterExitTime = high_resolution_clock::now(); \
+    timeSpentOutsideJpeg+= duration_cast<nanoseconds>(OuterExitTime - OuterEnterTime).count()
+
+  #define START_PROGRAM_TIMER() ProgramEnterTime = high_resolution_clock::now()
+  #define END_PROGRAM_TIMER() ProgramExitTime = high_resolution_clock::now(); \
+    programTime+= duration_cast<nanoseconds>(ProgramExitTime - ProgramEnterTime).count()
+
 #else
   #define START_TIMER() do {} while(0)
   #define END_TIMER() do {} while(0)
+  #define START_OUTER_TIMER() do {} while(0)
+  #define END_OUTER_TIMER() do {} while(0)
+  #define START_PROGRAM_TIMER() do {} while(0)
+  #define END_PROGRAM_TIMER() do {} while(0)
 #endif
 
 /******************** JPEG COMPRESSION SAMPLE INTERFACE *******************/
@@ -319,6 +339,7 @@ write_JPEG_file (char * filename, int quality)
    * compression/decompression processes, in existence at once.  We refer
    * to any one struct (and its associated working data) as a "JPEG object".
    */
+  START_OUTER_TIMER();
   struct jpeg_compress_struct* p_cinfo = (struct jpeg_compress_struct*) mallocInSandbox(sandbox, sizeof(struct jpeg_compress_struct));
 
   /* This struct represents a JPEG error handler.  It is declared separately
@@ -358,10 +379,12 @@ write_JPEG_file (char * filename, int quality)
    * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
    * requires it in order to write binary files.
    */
+  END_OUTER_TIMER();
   if ((outfile = fopen(filename, "wb")) == NULL) {
     fprintf(stderr, "can't open %s\n", filename);
     return 0;
   }
+  START_OUTER_TIMER();
 
   unsigned char ** p_outbuffer = (unsigned char **) mallocInSandbox(sandbox, sizeof(unsigned char *));
   unsigned long * p_outsize = (unsigned long *) mallocInSandbox(sandbox, sizeof(unsigned long));
@@ -421,8 +444,10 @@ write_JPEG_file (char * filename, int quality)
   d_jpeg_finish_compress(p_cinfo);
   /* After finish_compress, we can close the output file. */
   unsigned char * outbuffer = (unsigned char *) getUnsandboxedAddress(sandbox, (uintptr_t) *p_outbuffer);
+  END_OUTER_TIMER();
   fwrite(outbuffer, *p_outsize, 1, outfile);
   fclose(outfile);
+  START_OUTER_TIMER();
 
   /* Step 7: release JPEG compression object */
 
@@ -435,6 +460,7 @@ write_JPEG_file (char * filename, int quality)
   freeInSandbox(sandbox, p_jerr);
   freeInSandbox(sandbox, p_row_pointer);
 
+  END_OUTER_TIMER();
   /* And we're done! */
   return 1;
 }
@@ -558,6 +584,7 @@ read_JPEG_file (char * filename)
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
    */
+  START_OUTER_TIMER();
   struct jpeg_decompress_struct* p_cinfo = (struct jpeg_decompress_struct*) mallocInSandbox(sandbox, sizeof(struct jpeg_decompress_struct));
 
   /* We use our private extension JPEG error handler.
@@ -577,11 +604,12 @@ read_JPEG_file (char * filename)
    * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
    * requires it in order to read binary files.
    */
-
+  END_OUTER_TIMER();
   if ((infile = fopen(filename, "rb")) == NULL) {
     fprintf(stderr, "can't open %s\n", filename);
     return 0;
   }
+  START_OUTER_TIMER();
 
   /* Step 1: allocate and initialize JPEG decompression object */
 
@@ -614,7 +642,7 @@ read_JPEG_file (char * filename)
   d_jpeg_CreateDecompress(p_cinfo, JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_decompress_struct));
 
   /* Step 2: specify data source (eg, a file) */
-
+  END_OUTER_TIMER();
   fseek(infile, 0, SEEK_END);
   unsigned long fsize = ftell(infile);
   fseek(infile, 0, SEEK_SET);  //same as rewind(infile);
@@ -626,6 +654,7 @@ read_JPEG_file (char * filename)
   }
 
   fileBuff[fsize] = 0;
+  START_OUTER_TIMER();
 
   d_jpeg_mem_src(p_cinfo, fileBuff, fsize);
 
@@ -717,7 +746,9 @@ read_JPEG_file (char * filename)
    * so as to simplify the setjmp error logic above.  (Actually, I don't
    * think that jpeg_destroy can do an error exit, but why assume anything...)
    */
+  END_OUTER_TIMER();
   fclose(infile);
+  START_OUTER_TIMER();
 
   unregisterSandboxCallback(sandbox, slotNumber);
 
@@ -730,6 +761,7 @@ read_JPEG_file (char * filename)
    * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
    */
 
+  END_OUTER_TIMER();
   /* And we're done! */
   return 1;
 }
@@ -762,6 +794,7 @@ read_JPEG_file (char * filename)
 
 int dynamicLoad(char* path, char* libraryPath, char* sandbox_init_app)
 {
+  END_PROGRAM_TIMER();
   printf("Creating NaCl Sandbox");
 
   initializeDlSandboxCreator(0 /* Should enable detailed logging */);
@@ -773,6 +806,7 @@ int dynamicLoad(char* path, char* libraryPath, char* sandbox_init_app)
     return 0;
   }
 
+  START_PROGRAM_TIMER();
   printf("Loading dynamic library %s\n", path);
 
   dlPtr = dlopenInSandbox(sandbox, path, RTLD_LAZY);
@@ -846,6 +880,7 @@ int dynamicLoad(char* path, char* libraryPath, char* sandbox_init_app)
 
 int main(int argc, char** argv)
 {
+  START_PROGRAM_TIMER();
   if(argc < 6)
   { 
     printf("No io files specified. Expected arg example input.jpeg output.jpeg libjpeg.so naclLibraryPath sandboxInitApp\n");
@@ -882,8 +917,12 @@ int main(int argc, char** argv)
   freeInSandbox(sandbox, image_buffer);
   dlcloseInSandbox(sandbox, dlPtr);
 
+
   #ifdef PRINT_FUNCTION_TIMES
     printf("JPEG invocations = %10" PRId64 ", time = %10" PRId64 " ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
+    printf("JPEG total time = %10" PRId64 " ns\n", timeSpentOutsideJpeg);
+    END_PROGRAM_TIMER();
+    printf("JPEG program time = %10" PRId64 " ns\n", programTime);
   #endif
 
   printf("Success\n");
