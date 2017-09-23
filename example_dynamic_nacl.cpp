@@ -890,13 +890,29 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  #ifdef PRINT_FUNCTION_TIMES
+    printf("Read JPEG invocations = %10" PRId64 ", time = %10" PRId64 " ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
+    printf("Read JPEG total time = %10" PRId64 " ns\n", timeSpentOutsideJpeg);
+  #endif
+
   printf("Width: %d, Height: %d\n", image_width, image_height);
+
+  #ifdef PRINT_FUNCTION_TIMES
+    timeSpentInJpeg = 0;
+    sandboxFuncOrCallbackInvocations = 0;
+    timeSpentOutsideJpeg = 0;
+  #endif
 
   if(!write_JPEG_file(p_outbuffer, p_outsize, 30))
   {
     printf("Writing to file %s failed\n", argv[2]);
     return 1; 
   }
+
+  #ifdef PRINT_FUNCTION_TIMES
+    printf("Write JPEG invocations = %10" PRId64 ", time = %10" PRId64 " ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
+    printf("Write JPEG total time = %10" PRId64 " ns\n", timeSpentOutsideJpeg);
+  #endif
 
   freeInSandbox(sandbox, image_buffer);
   dlcloseInSandbox(sandbox, dlPtr);
@@ -909,11 +925,7 @@ int main(int argc, char** argv)
   freeInSandbox(sandbox, p_outsize);
   END_PROGRAM_TIMER();
 
-
   #ifdef PRINT_FUNCTION_TIMES
-    printf("JPEG invocations = %10" PRId64 ", time = %10" PRId64 " ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
-    printf("JPEG total time = %10" PRId64 " ns\n", timeSpentOutsideJpeg);
-    END_PROGRAM_TIMER();
     printf("JPEG program time = %10" PRId64 " ns\n", programTime);
   #endif
 
