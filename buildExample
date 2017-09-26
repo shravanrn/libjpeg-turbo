@@ -26,7 +26,18 @@ g++ -O3 -m32 -mno-align-double -I./non_nacl_build -o example_dynamic_non_nacl ex
 
 ############### Dynamic NaCl ###############
 g++ -c -O3 -m32 -mno-align-double -I./nacl_build -I/home/shr/Code/nacl2/native_client/src/trusted/dyn_ldr/ -o example_dynamic_nacl.o example_dynamic_nacl.cpp
+
 g++ -m32 -mno-align-double -o example_dynamic_nacl -Wl,-rpath=/home/shr/Code/nacl2/native_client/scons-out/opt-linux-x86-32/lib -L/home/shr/Code/nacl2/native_client/scons-out/opt-linux-x86-32/lib example_dynamic_nacl.o -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_32 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_32 -lrt -lpthread
+
+############### Dynamic Fat Client NaCl ###############
+/home/shr/Code/nacl2/native_client/toolchain/linux_x86/nacl_x86_glibc/bin/x86_64-nacl-g++ -c -O3 -m32 -mno-align-double -fPIC -std=c++0x -I./nacl_build -I/home/shr/Code/nacl2/native_client/src/trusted/dyn_ldr/ -shared -o example_dynamic_non_nacl_shared.o example_dynamic_non_nacl.cpp
+
+/home/shr/Code/nacl2/native_client/toolchain/linux_x86/nacl_x86_glibc/bin/x86_64-nacl-g++ -m32 -mno-align-double -fPIC -std=c++0x -shared -o lib_example_dynamic_non_nacl.so -Wl,-rpath=/home/shr/Code/nacl2/native_client/scons-out/opt-linux-x86-32/lib -L/home/shr/Code/nacl2/native_client/scons-out/opt-linux-x86-32/lib example_dynamic_non_nacl_shared.o -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_32 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_32 -lrt -lpthread
+
+g++ -c -O3 -m32 -mno-align-double -I./nacl_build -I/home/shr/Code/nacl2/native_client/src/trusted/dyn_ldr/ -o example_dynamic_nacl_fat_client.o example_dynamic_nacl_fat_client.cpp
+
+g++ -m32 -mno-align-double -o example_dynamic_nacl_fat_client -Wl,-rpath=/home/shr/Code/nacl2/native_client/scons-out/opt-linux-x86-32/lib -L/home/shr/Code/nacl2/native_client/scons-out/opt-linux-x86-32/lib example_dynamic_nacl_fat_client.o -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_32 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_32 -lrt -lpthread
+
 
 ############### NaCl build commands - for reference ###############
 
@@ -43,3 +54,4 @@ g++ -m32 -mno-align-double -o example_dynamic_nacl -Wl,-rpath=/home/shr/Code/nac
 echo Run with './example_static ./test.jpeg ./test_out.jpeg'
 echo Run with './example_dynamic_non_nacl ./test.jpeg ./test_out.jpeg ./non_nacl_build/.libs/libjpeg.so'
 echo Run with './example_dynamic_nacl ./test.jpeg ./test_out.jpeg ./nacl_build/.libs/libjpeg.so /home/shr/Code/nacl2/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ /home/shr/Code/nacl2/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe'
+echo Run with './example_dynamic_nacl_fat_client ./test.jpeg ./test_out.jpeg ./nacl_build/.libs/libjpeg.so ./lib_example_dynamic_non_nacl.so /home/shr/Code/nacl2/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ /home/shr/Code/nacl2/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe'

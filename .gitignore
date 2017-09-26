@@ -25,3 +25,5 @@ missing
 /example_dynamic_nacl_profiling
 /example_dynamic_non_nacl_profiling
 /test_out.jpeg
+/lib_example_dynamic_non_nacl.so
+/example_dynamic_nacl_fat_client

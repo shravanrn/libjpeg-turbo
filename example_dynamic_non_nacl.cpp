@@ -45,10 +45,10 @@
   #include <chrono>
   using namespace std::chrono;
 
-  __thread long long timeSpentInJpeg = 0;
-  __thread long long sandboxFuncOrCallbackInvocations = 0;
-  __thread high_resolution_clock::time_point SandboxEnterTime;
-  __thread high_resolution_clock::time_point SandboxExitTime;
+  long long timeSpentInJpeg = 0;
+  long long sandboxFuncOrCallbackInvocations = 0;
+  high_resolution_clock::time_point SandboxEnterTime;
+  high_resolution_clock::time_point SandboxExitTime;
 
   long long timeSpentOutsideJpeg = 0;
   high_resolution_clock::time_point OuterEnterTime;
@@ -764,12 +764,18 @@ int main(int argc, char** argv)
     }
 
     printf("Reading file %s failed\n", argv[1]);
+    fflush(stdout);
     return 1;
   }
 
   #ifdef PRINT_FUNCTION_TIMES
-    printf("Read JPEG invocations = %10" PRId64 ", time = %10" PRId64 " ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
-    printf("Read JPEG total time = %10" PRId64 " ns\n", timeSpentOutsideJpeg);
+    #if defined(_WIN32)
+      printf("Read JPEG invocations = %I64d, time = %I64d ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
+      printf("Read JPEG total time = %I64d ns\n", timeSpentOutsideJpeg);
+    #else
+      printf("Read JPEG invocations = %lld, time = %lld ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
+      printf("Read JPEG total time = %lld ns\n", timeSpentOutsideJpeg);
+    #endif
   #endif
 
   printf("Width: %d, Height: %d\n", image_width, image_height);
@@ -782,13 +788,19 @@ int main(int argc, char** argv)
 
   if(!write_JPEG_file(p_outbuffer, p_outsize, 30))
   {
-    printf("Writing to file %s failed\n", argv[2]);
+    printf("Writing to fe %s failed\n", argv[2]);
+    fflush(stdout);
     return 1; 
   }
 
   #ifdef PRINT_FUNCTION_TIMES
-    printf("Write JPEG invocations = %10" PRId64 ", time = %10" PRId64 " ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
-    printf("Write JPEG total time = %10" PRId64 " ns\n", timeSpentOutsideJpeg);
+    #if defined(_WIN32)
+      printf("Write JPEG invocations = %I64d, time = %I64d ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
+      printf("Write JPEG total time = %I64d ns\n", timeSpentOutsideJpeg);
+    #else
+      printf("Write JPEG invocations = %lld, time = %lld ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
+      printf("Write JPEG total time = %lld ns\n", timeSpentOutsideJpeg);
+    #endif
   #endif
 
   free(image_buffer);
@@ -803,9 +815,14 @@ int main(int argc, char** argv)
   END_PROGRAM_TIMER();
 
   #ifdef PRINT_FUNCTION_TIMES
-    printf("JPEG program time = %10" PRId64 " ns\n", programTime);
+    #if defined(_WIN32)
+      printf("JPEG program time = %I64d ns\n", programTime);
+    #else
+      printf("JPEG program time = %lld ns\n", programTime);
+    #endif
   #endif
 
   printf("Success\n");
+  fflush(stdout);
   return 0;
 }
