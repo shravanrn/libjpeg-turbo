@@ -87,17 +87,17 @@ fi
 
 AC_MSG_CHECKING([for object file format specifier (NAFLAGS) ])
 case "$objfmt" in
-  MSOMF)      NAFLAGS='-fobj -DOBJ32';;
-  Win32-COFF) NAFLAGS='-fwin32 -DWIN32';;
-  Win64-COFF) NAFLAGS='-fwin64 -DWIN64 -D__x86_64__';;
-  COFF)       NAFLAGS='-fcoff -DCOFF';;
-  a.out)      NAFLAGS='-faout -DAOUT';;
-  BSD-a.out)  NAFLAGS='-faoutb -DAOUT';;
-  ELF)        NAFLAGS='-felf -DELF';;
-  ELF64)      NAFLAGS='-felf64 -DELF -D__x86_64__';;
-  RDF)        NAFLAGS='-frdf -DRDF';;
-  Mach-O)     NAFLAGS='-fmacho -DMACHO';;
-  Mach-O64)   NAFLAGS='-fmacho64 -DMACHO -D__x86_64__';;
+  MSOMF)      NAFLAGS="$NAFLAGS -fobj -DOBJ32";;
+  Win32-COFF) NAFLAGS="$NAFLAGS -fwin32 -DWIN32";;
+  Win64-COFF) NAFLAGS="$NAFLAGS -fwin64 -DWIN64 -D__x86_64__";;
+  COFF)       NAFLAGS="$NAFLAGS -fcoff -DCOFF";;
+  a.out)      NAFLAGS="$NAFLAGS -faout -DAOUT";;
+  BSD-a.out)  NAFLAGS="$NAFLAGS -faoutb -DAOUT";;
+  ELF)        NAFLAGS="$NAFLAGS -felf -DELF";;
+  ELF64)      NAFLAGS="$NAFLAGS -felf64 -DELF -D__x86_64__";;
+  RDF)        NAFLAGS="$NAFLAGS -frdf -DRDF";;
+  Mach-O)     NAFLAGS="$NAFLAGS -fmacho -DMACHO";;
+  Mach-O64)   NAFLAGS="$NAFLAGS -fmacho64 -DMACHO -D__x86_64__";;
 esac
 AC_MSG_RESULT([$NAFLAGS])
 AC_SUBST([NAFLAGS])

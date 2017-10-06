@@ -3,7 +3,11 @@ My notes
 ==========
 A fork of lib-jpeg turbo to test with building using NaCl
 
-After following pre-reqs in Building.md, follow steps in the file 'buildExample'
+To build
+- Following pre-reqs in Building.md
+- Get the source code for the NASM assembler which has been modified to emit NACL compliant code from https://github.com/shravanrn/NASM_NaCl.git, and build this
+- Follow steps in the file 'buildExample'. Set the variable NACL_NASM in 'buildExample' to the path of the nasm assembler built in the previous step
+- The built files are found in buildFolder/.libs/libjpeg.so
 
 A script for perf testing is found in 'runPerfTest'
 

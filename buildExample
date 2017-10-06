@@ -16,6 +16,23 @@ make clean
 make
 cd ..
 
+################### MODIFY THIS TO YOUR OWN LOCAL NaCl compliant NASM ###################
+$NACL_NASM="/home/shr/Code/nasm-2.13/nasm"
+
+mkdir nacl_build_simd
+cd nacl_build_simd
+sh ../configure --host i686-pc-linux-gnu CFLAGS='-O3 -m32 -mno-align-double' LDFLAGS=-m32 CC=/home/shr/Code/nacl2/native_client/toolchain/linux_x86/nacl_x86_glibc/bin/x86_64-nacl-gcc NASM="$NACL_NASM" NAFLAGS='-nacl -DCOMPILING_FOR_NACL'
+make clean
+make
+cd ..
+
+mkdir non_nacl_build_simd
+cd non_nacl_build_simd
+sh ../configure --host i686-pc-linux-gnu CFLAGS='-O3 -m32 -mno-align-double' LDFLAGS=-m32 CC=gcc
+make clean
+make
+cd ..
+
 # Build examples
 
 ############### Static Non NaCl ###############

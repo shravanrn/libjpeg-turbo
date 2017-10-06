@@ -27,3 +27,5 @@ missing
 /test_out.jpeg
 /lib_example_dynamic_non_nacl.so
 /example_dynamic_nacl_fat_client
+/nacl_build_simd/
+/non_nacl_build_simd/

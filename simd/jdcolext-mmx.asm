@@ -249,7 +249,11 @@ EXTN(jsimd_ycc_rgb_convert_mmx):
         movq    MMWORD [edi+2*SIZEOF_MMWORD], mmC
 
         sub     ecx, byte SIZEOF_MMWORD
+%ifdef COMPILING_FOR_NACL
+        jz      near .nextrow
+%else
         jz      short .nextrow
+%endif
 
         add     esi, byte SIZEOF_MMWORD                 ; inptr0
         add     ebx, byte SIZEOF_MMWORD                 ; inptr1

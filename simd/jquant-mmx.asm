@@ -105,7 +105,11 @@ EXTN(jsimd_convsamp_mmx):
         add     esi, byte 4*SIZEOF_JSAMPROW
         add     edi, byte 4*DCTSIZE*SIZEOF_DCTELEM
         dec     ecx
+%ifdef COMPILING_FOR_NACL
+        jnz     near .convloop
+%else
         jnz     short .convloop
+%endif
 
         emms            ; empty MMX state
 
