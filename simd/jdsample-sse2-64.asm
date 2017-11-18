@@ -513,7 +513,7 @@ EXTN(jsimd_h2v1_upsample_sse2):
 
         mov     rcx, r10        ; rowctr
         test    rcx,rcx
-        jz      short .return
+        jz      near .return
 
         mov     rsi, r12 ; input_data
         mov     rdi, r13
@@ -562,7 +562,7 @@ EXTN(jsimd_h2v1_upsample_sse2):
         add     rsi, byte SIZEOF_JSAMPROW       ; input_data
         add     rdi, byte SIZEOF_JSAMPROW       ; output_data
         dec     rcx                             ; rowctr
-        jg      short .rowloop
+        jg      near .rowloop
 
 .return:
         uncollect_args

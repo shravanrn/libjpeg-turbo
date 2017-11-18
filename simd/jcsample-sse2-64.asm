@@ -149,7 +149,7 @@ EXTN(jsimd_h2v1_downsample_sse2):
         cmp     rcx, byte SIZEOF_XMMWORD
         jae     short .columnloop
         test    rcx,rcx
-        jnz     short .columnloop_r8
+        jnz     near .columnloop_r8
 
         pop     rsi
         pop     rdi
