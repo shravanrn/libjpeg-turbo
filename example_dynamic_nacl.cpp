@@ -747,13 +747,13 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
  * temporary files are deleted if the program is interrupted.  See libjpeg.txt.
  */
 
-int dynamicLoad(char* path, char* libraryPath, char* sandbox_init_app)
+int dynamicLoad(char* path, char* libraryPath)
 {
   END_PROGRAM_TIMER();
-  printf("Creating NaCl Sandbox");
+  printf("Creating NaCl Sandbox for %s\n", path);
 
   initializeDlSandboxCreator(0 /* Should enable detailed logging */);
-  sandbox = createDlSandbox(libraryPath, sandbox_init_app);
+  sandbox = createDlSandbox(libraryPath, path);
 
   if(!sandbox)
   {
@@ -762,34 +762,25 @@ int dynamicLoad(char* path, char* libraryPath, char* sandbox_init_app)
   }
 
   START_PROGRAM_TIMER();
-  printf("Loading dynamic library %s\n", path);
-
-  dlPtr = dlopenInSandbox(sandbox, path, RTLD_LAZY);
-
-  if(!dlPtr)
-  {
-    printf("Loading of dynamic library %s has failed\n", path);
-    return 0;
-  }
 
   printf("Loading symbols\n");
 
-  void* p_jpeg_std_error = dlsymInSandbox(sandbox, dlPtr, "jpeg_std_error");
-  void* p_jpeg_CreateCompress = dlsymInSandbox(sandbox, dlPtr, "jpeg_CreateCompress");
-  void* p_jpeg_mem_dest = dlsymInSandbox(sandbox, dlPtr, "jpeg_mem_dest");
-  void* p_jpeg_set_defaults = dlsymInSandbox(sandbox, dlPtr, "jpeg_set_defaults");
-  void* p_jpeg_set_quality = dlsymInSandbox(sandbox, dlPtr, "jpeg_set_quality");
-  void* p_jpeg_start_compress = dlsymInSandbox(sandbox, dlPtr, "jpeg_start_compress");
-  void* p_jpeg_write_scanlines = dlsymInSandbox(sandbox, dlPtr, "jpeg_write_scanlines");
-  void* p_jpeg_finish_compress = dlsymInSandbox(sandbox, dlPtr, "jpeg_finish_compress");
-  void* p_jpeg_destroy_compress = dlsymInSandbox(sandbox, dlPtr, "jpeg_destroy_compress");
-  void* p_jpeg_CreateDecompress = dlsymInSandbox(sandbox, dlPtr, "jpeg_CreateDecompress");
-  void* p_jpeg_mem_src = dlsymInSandbox(sandbox, dlPtr, "jpeg_mem_src");
-  void* p_jpeg_read_header = dlsymInSandbox(sandbox, dlPtr, "jpeg_read_header");
-  void* p_jpeg_start_decompress = dlsymInSandbox(sandbox, dlPtr, "jpeg_start_decompress");
-  void* p_jpeg_read_scanlines = dlsymInSandbox(sandbox, dlPtr, "jpeg_read_scanlines");
-  void* p_jpeg_finish_decompress = dlsymInSandbox(sandbox, dlPtr, "jpeg_finish_decompress");
-  void* p_jpeg_destroy_decompress = dlsymInSandbox(sandbox, dlPtr, "jpeg_destroy_decompress");
+  void* p_jpeg_std_error = symbolTableLookupInSandbox(sandbox, "jpeg_std_error");
+  void* p_jpeg_CreateCompress = symbolTableLookupInSandbox(sandbox, "jpeg_CreateCompress");
+  void* p_jpeg_mem_dest = symbolTableLookupInSandbox(sandbox, "jpeg_mem_dest");
+  void* p_jpeg_set_defaults = symbolTableLookupInSandbox(sandbox, "jpeg_set_defaults");
+  void* p_jpeg_set_quality = symbolTableLookupInSandbox(sandbox, "jpeg_set_quality");
+  void* p_jpeg_start_compress = symbolTableLookupInSandbox(sandbox, "jpeg_start_compress");
+  void* p_jpeg_write_scanlines = symbolTableLookupInSandbox(sandbox, "jpeg_write_scanlines");
+  void* p_jpeg_finish_compress = symbolTableLookupInSandbox(sandbox, "jpeg_finish_compress");
+  void* p_jpeg_destroy_compress = symbolTableLookupInSandbox(sandbox, "jpeg_destroy_compress");
+  void* p_jpeg_CreateDecompress = symbolTableLookupInSandbox(sandbox, "jpeg_CreateDecompress");
+  void* p_jpeg_mem_src = symbolTableLookupInSandbox(sandbox, "jpeg_mem_src");
+  void* p_jpeg_read_header = symbolTableLookupInSandbox(sandbox, "jpeg_read_header");
+  void* p_jpeg_start_decompress = symbolTableLookupInSandbox(sandbox, "jpeg_start_decompress");
+  void* p_jpeg_read_scanlines = symbolTableLookupInSandbox(sandbox, "jpeg_read_scanlines");
+  void* p_jpeg_finish_decompress = symbolTableLookupInSandbox(sandbox, "jpeg_finish_decompress");
+  void* p_jpeg_destroy_decompress = symbolTableLookupInSandbox(sandbox, "jpeg_destroy_decompress");
 
   int failed = 0;
   if(p_jpeg_std_error == NULL) { printf("Symbol resolution failed for jpeg_std_error\n"); failed = 1; }
@@ -836,15 +827,15 @@ int dynamicLoad(char* path, char* libraryPath, char* sandbox_init_app)
 int main(int argc, char** argv)
 {
   START_PROGRAM_TIMER();
-  if(argc < 6)
+  if(argc < 5)
   { 
-    printf("No io files specified. Expected arg example input.jpeg output.jpeg libjpeg.so naclLibraryPath sandboxInitApp\n");
+    printf("No io files specified. Expected arg example input.jpeg output.jpeg libjpeg.nexe naclLibraryPath\n");
     return 1;
   }
 
   printf("Starting\n");
 
-  if(!dynamicLoad(argv[3], argv[4], argv[5]))
+  if(!dynamicLoad(argv[3], argv[4]))
   {
     printf("Dynamic load failed\n");
     return 1;
@@ -927,7 +918,6 @@ int main(int argc, char** argv)
   #endif
 
   freeInSandbox(sandbox, image_buffer);
-  dlcloseInSandbox(sandbox, dlPtr);
 
   fwrite(*p_outbuffer, *p_outsize, 1, outfile);
   fclose(outfile);
