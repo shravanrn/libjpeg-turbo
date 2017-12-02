@@ -1,17 +1,19 @@
 
 Notes related to this particular repo
 ==========
-A fork of lib-jpeg turbo to test with building using NaCl
+A fork of libjpeg-turbo to test with sandboxing of various types
 
 To build
-- Following pre-reqs in Building.md
+- Follow the pre-reqs in BUILDING.txt as appropriate
 - Get the source code for the NASM assembler which has been modified to emit NACL compliant code from https://github.com/shravanrn/NASM_NaCl.git, and build this
+- `cd builds`
 - Edit the variables at the top of the Makefile in the `builds` directory as
-  appropriate for your machine.
-- Build using the targets in `builds/Makefile`.  For instance, `cd builds`
-  then `make example_nacl` or `make run_example_nacl`
-- The built files are found in buildFolder/.libs/libjpeg.so, in the `builds`
-  directory, and in subdirectories of `builds`.
+  appropriate for your machine
+- Build using the targets in this Makefile.  For instance,
+  `make example_dynamic_nacl` or `make run_dynamic_nacl`
+- The built files are found in the `builds` directory and its subdirectories;
+  in particular, you can find `libjpeg.so` in `builds/*/.libs` where * is the
+  appropriate subfolder for your desired build settings
 
 A script for perf testing is found in 'runPerfTest'
 
