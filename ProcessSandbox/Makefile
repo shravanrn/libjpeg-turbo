@@ -9,7 +9,7 @@ PRODUCTS=ProcessSandbox.a ProcessSandbox_otherside
 
 all : $(PRODUCTS)
 
-ProcessSandbox.a : ProcessSandbox.o Sandbox.o synch.o timing.o MyMalloc.o
+ProcessSandbox.a : ProcessSandbox.o synch.o timing.o MyMalloc.o
 	ar crv $@ $^
 	ranlib $@
 
@@ -19,10 +19,7 @@ ProcessSandbox_otherside : ProcessSandbox_otherside.o synch.o MyMalloc.o
 ProcessSandbox_otherside.o : ProcessSandbox_otherside.cpp ProcessSandbox_otherside.h ProcessSandbox_sharedmem.h synch.h MyMalloc.h jpeglib_helpers.h
 	$(CC) $(CFLAGS) -c $< -o $@ $(LIBFLAGS)
 
-ProcessSandbox.o : ProcessSandbox.cpp ProcessSandbox.h ProcessSandbox_sharedmem.h Sandbox.h synch.h MyMalloc.h jpeglib_helpers.h
-	$(CC) $(CFLAGS) -c $< -o $@ $(LIBFLAGS)
-
-Sandbox.o : Sandbox.cpp Sandbox.h
+ProcessSandbox.o : ProcessSandbox.cpp ProcessSandbox.h ProcessSandbox_sharedmem.h synch.h MyMalloc.h jpeglib_helpers.h
 	$(CC) $(CFLAGS) -c $< -o $@ $(LIBFLAGS)
 
 synch.o : synch.cpp synch.h

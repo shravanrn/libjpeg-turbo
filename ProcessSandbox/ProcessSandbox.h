@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Sandbox.h"
 #include "ProcessSandbox_sharedmem.h"
 #include "MyMalloc.h"
 
-class ProcessSandbox : public Sandbox {
+class ProcessSandbox {
   public:
     ProcessSandbox();
 

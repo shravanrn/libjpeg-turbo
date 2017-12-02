@@ -452,10 +452,10 @@ void put_scanline_someplace(JSAMPROW rowBuffer, int row_stride)
 }
 
 #ifdef USE_PROCESS
-static void* mallocInSandbox(Sandbox* sandbox, size_t size) {
+static void* mallocInSandbox(ProcessSandbox* sandbox, size_t size) {
   return sandbox->mallocInSandbox(size);
 }
-static void freeInSandbox(Sandbox* sandbox, void* ptr) {
+static void freeInSandbox(ProcessSandbox* sandbox, void* ptr) {
   sandbox->freeInSandbox(ptr);
 }
 #define SANDBOX_CALLBACK
