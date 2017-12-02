@@ -8,9 +8,10 @@ LDFLAGS=-m32
 HOST=i686-pc-linux-gnu
 PRODUCTS=example_static example_dynamic_non_nacl example_dynamic_nacl example_dynamic_ps
 PS_SRCS=$(wildcard ../ProcessSandbox/*.cpp ../ProcessSandbox/*.h)
+USER=cdisselk
 CORE=0
 
-.PHONY : all run_all run_static run_dynamic_non_nacl run_dynamic_nacl run_dynamic_ps dbg_static dbg_dynamic_non_nacl dbg_dynamic_nacl dbg_dynamic_ps debug clean
+.PHONY : all run_all run_static run_dynamic_non_nacl run_dynamic_nacl run_dynamic_ps dbg_static dbg_dynamic_non_nacl dbg_dynamic_nacl dbg_dynamic_ps debug clean kill_old_processes
 
 all : $(PRODUCTS)
 
@@ -97,7 +98,7 @@ run_dynamic_nacl : example_dynamic_nacl
 	echo && echo dynamic_nacl: && echo && \
 	taskset -c $(CORE) $(GDB) ./example_dynamic_nacl ../test.jpeg ../test_out.jpeg ./nacl_build/.libs/libjpeg.so $(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe
 
-run_dynamic_ps : example_dynamic_ps ../ProcessSandbox/ProcessSandbox_otherside
+run_dynamic_ps : example_dynamic_ps ../ProcessSandbox/ProcessSandbox_otherside kill_old_processes
 	echo && echo dynamic_ps: && echo && \
 	LD_LIBRARY_PATH=../builds/ps_build/.libs:$(LD_LIBRARY_PATH) \
 	taskset -c $(CORE) $(GDB) ./example_dynamic_ps ../test.jpeg ../test_out.jpeg ./ps_build/.libs/libjpeg.so notused notused
@@ -110,6 +111,9 @@ dbg_dynamic_ps : debug run_dynamic_ps
 debug :
 	$(eval GDB ?= gdb --args)
 	$(eval CFLAGS += -g)
+
+kill_old_processes :
+	-pkill -u $(USER) -f ProcessSandbox_otherside
 
 clean :
 	rm -rf nacl_build nacl_build_simd non_nacl_build non_nacl_build_simd ps_build ps_build_simd $(PRODUCTS) *.o
