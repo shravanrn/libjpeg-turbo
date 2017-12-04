@@ -3,11 +3,13 @@ CXX=g++
 NACL_NASM=/home/cdisselk/CSE227/NASM_NaCl/nasm
 SANDBOXING_NACL_DIR=/home/cdisselk/CSE227/Sandboxing_NaCl
 NACL_GCC=$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/bin/x86_64-nacl-gcc
+PROCESS_SANDBOX_DIR=/home/cdisselk/CSE227/poc
+PS_SRCS=$(wildcard $(PROCESS_SANDBOX_DIR)/*.cpp $(PROCESS_SANDBOX_DIR)/*.h)
+OTHERSIDE_EXEC ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32  # path of the appropriate ProcessSandbox_otherside executable
 CFLAGS=-O3 -m32 -mno-align-double
 LDFLAGS=-m32
 HOST=i686-pc-linux-gnu
 PRODUCTS=example_static example_dynamic_non_nacl example_dynamic_nacl example_dynamic_ps
-PS_SRCS=$(wildcard ../ProcessSandbox/*.cpp ../ProcessSandbox/*.h)
 USER=cdisselk
 CORE=0
 
@@ -73,18 +75,18 @@ example_dynamic_nacl : example_dynamic_nacl.o
 	$(CXX) $(CFLAGS) $< -o $@ -Wl,-rpath=$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_32 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_32 -lrt -lpthread
 
 example_dynamic_ps.o : ../example_dynamic_nacl.cpp ps_build
-	$(CXX) -c $(CFLAGS) -DUSE_PROCESS -I./ps_build -I../ProcessSandbox $< -o $@
+	$(CXX) -c $(CFLAGS) -DUSE_PROCESS -I./ps_build -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
 
-example_dynamic_ps : example_dynamic_ps.o ../ProcessSandbox/ProcessSandbox.a
+example_dynamic_ps : example_dynamic_ps.o $(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg32.a
 	$(CXX) $(CFLAGS) $^ -o $@ -lrt -lpthread
 
 # Assumes non-simd
-../ProcessSandbox/ProcessSandbox.a : $(PS_SRCS) ps_build
-	$(MAKE) -C ../ProcessSandbox CFLAGS='$(CFLAGS) -I.. -I../builds/ps_build' LIBFLAGS='-L.. -L../builds/ps_build/.libs' $(@F)
+$(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg32.a : $(PS_SRCS) ps_build
+	$(MAKE) -C $(PROCESS_SANDBOX_DIR) CFLAGS='$(CFLAGS) -I.. -I../builds/ps_build' LIBFLAGS='-L.. -L../builds/ps_build/.libs' $(@F)
 
 # Assumes non-simd
-../ProcessSandbox/ProcessSandbox_otherside : $(PS_SRCS) ps_build
-	$(MAKE) -C ../ProcessSandbox CFLAGS='$(CFLAGS) -I.. -I../builds/ps_build' LIBFLAGS='-L.. -L../builds/ps_build/.libs' $(@F)
+$(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32 : $(PS_SRCS) ps_build
+	$(MAKE) -C $(PROCESS_SANDBOX_DIR) CFLAGS='$(CFLAGS) -I.. -I../builds/ps_build' LIBFLAGS='-L.. -L../builds/ps_build/.libs' $(@F)
 
 run_static : example_static
 	echo && echo static: && echo && \
@@ -98,10 +100,10 @@ run_dynamic_nacl : example_dynamic_nacl
 	echo && echo dynamic_nacl: && echo && \
 	taskset -c $(CORE) $(GDB) ./example_dynamic_nacl ../test.jpeg ../test_out.jpeg ./nacl_build/.libs/libjpeg.so $(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe
 
-run_dynamic_ps : example_dynamic_ps ../ProcessSandbox/ProcessSandbox_otherside kill_old_processes
+run_dynamic_ps : example_dynamic_ps $(OTHERSIDE_EXEC) kill_old_processes
 	echo && echo dynamic_ps: && echo && \
 	LD_LIBRARY_PATH=../builds/ps_build/.libs:$(LD_LIBRARY_PATH) \
-	taskset -c $(CORE) $(GDB) ./example_dynamic_ps ../test.jpeg ../test_out.jpeg ./ps_build/.libs/libjpeg.so notused notused
+	taskset -c $(CORE) $(GDB) ./example_dynamic_ps ../test.jpeg ../test_out.jpeg ./ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC) notused
 
 dbg_static : debug run_static
 dbg_dynamic_non_nacl : debug run_dynamic_non_nacl
@@ -117,4 +119,4 @@ kill_old_processes :
 
 clean :
 	-rm -rf nacl_build nacl_build_simd non_nacl_build non_nacl_build_simd ps_build ps_build_simd $(PRODUCTS) *.o
-	-$(MAKE) -C ../ProcessSandbox clean
+	-$(MAKE) -C $(PROCESS_SANDBOX_DIR) clean

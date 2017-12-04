@@ -6,7 +6,10 @@ A fork of libjpeg-turbo to test with sandboxing of various types
 To build
 - Follow the pre-reqs in BUILDING.txt as appropriate
 - Get the source code for the NASM assembler which has been modified to emit NACL compliant code from https://github.com/shravanrn/NASM_NaCl.git, and build this
-- `cd builds`
+- Get the source code for ProcessSandbox from
+  https://bitbucket.org/cdisselkoen/sandbox-benchmarking.git
+- Configure ProcessSandbox by editing the variables at the top of its Makefile
+- In this repo (libjpeg-turbo_nacltests), `cd builds`
 - Edit the variables at the top of the Makefile in the `builds` directory as
   appropriate for your machine
 - Build using the targets in this Makefile.  For instance,

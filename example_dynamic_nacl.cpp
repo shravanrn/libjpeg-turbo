@@ -913,7 +913,7 @@ int dynamicLoad(char* path, char* libraryPath, char* sandbox_init_app)
   sandbox = createDlSandbox(libraryPath, sandbox_init_app);
 #elif defined(USE_PROCESS)
   printf("Creating process sandbox\n");
-  sandbox = new ProcessSandbox();
+  sandbox = new ProcessSandbox(libraryPath);
 #else
 #error No sandbox type defined.
 #endif
@@ -1002,8 +1002,14 @@ int main(int argc, char** argv)
 {
   START_PROGRAM_TIMER();
   if(argc < 6)
-  { 
+  {
+#ifdef USE_NACL
     printf("No io files specified. Expected arg example input.jpeg output.jpeg libjpeg.so naclLibraryPath sandboxInitApp\n");
+#elif defined(USE_PROCESS)
+    printf("Error: expected 5 arguments\n  (1) input.jpeg\n  (2) output.jpeg\n  (3) libjpeg.so\n  (4) ProcessSandbox_otherside\n  (5) [ignored]\n");
+#else
+#error No sandbox type defined.
+#endif
     return 1;
   }
 
