@@ -63,11 +63,11 @@ non_nacl_build_simd :
 example_static : non_nacl_build non_nacl_build/.libs/libturbojpeg.a ../example.c
 	$(CC) $(CFLAGS) -I./non_nacl_build -o $@ ../example.c ./non_nacl_build/.libs/libturbojpeg.a
 
-example_dynamic_non_nacl : non_nacl_build ../example_dynamic_non_nacl.cpp
-	$(CXX) $(CFLAGS) -I./non_nacl_build -o $@ ../example_dynamic_non_nacl.cpp -ldl
+example_dynamic_non_nacl : ../example_dynamic_non_nacl.cpp non_nacl_build
+	$(CXX) $(CFLAGS) -I./non_nacl_build $< -o $@ -ldl
 
-example_dynamic_nacl.o : nacl_build ../example_dynamic_nacl.cpp
-	$(CXX) -c $(CFLAGS) -DUSE_NACL -I./nacl_build -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ -o $@ ../example_dynamic_nacl.cpp
+example_dynamic_nacl.o : ../example_dynamic_nacl.cpp nacl_build
+	$(CXX) -c $(CFLAGS) -DUSE_NACL -I./nacl_build -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@
 
 example_dynamic_nacl : example_dynamic_nacl.o
 	$(CXX) $(CFLAGS) $< -o $@ -Wl,-rpath=$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_32 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_32 -lrt -lpthread
@@ -80,11 +80,11 @@ example_dynamic_ps : example_dynamic_ps.o ../ProcessSandbox/ProcessSandbox.a
 
 # Assumes non-simd
 ../ProcessSandbox/ProcessSandbox.a : $(PS_SRCS) ps_build
-	$(MAKE) -C ../ProcessSandbox CFLAGS='$(CFLAGS) -I.. -I../builds/ps_build' LIBFLAGS='-L.. -L../builds/ps_build/.libs' ProcessSandbox.a
+	$(MAKE) -C ../ProcessSandbox CFLAGS='$(CFLAGS) -I.. -I../builds/ps_build' LIBFLAGS='-L.. -L../builds/ps_build/.libs' $(@F)
 
 # Assumes non-simd
 ../ProcessSandbox/ProcessSandbox_otherside : $(PS_SRCS) ps_build
-	$(MAKE) -C ../ProcessSandbox CFLAGS='$(CFLAGS) -I.. -I../builds/ps_build' LIBFLAGS='-L.. -L../builds/ps_build/.libs' ProcessSandbox_otherside
+	$(MAKE) -C ../ProcessSandbox CFLAGS='$(CFLAGS) -I.. -I../builds/ps_build' LIBFLAGS='-L.. -L../builds/ps_build/.libs' $(@F)
 
 run_static : example_static
 	echo && echo static: && echo && \
@@ -116,5 +116,5 @@ kill_old_processes :
 	-pkill -u $(USER) -f ProcessSandbox_otherside
 
 clean :
-	rm -rf nacl_build nacl_build_simd non_nacl_build non_nacl_build_simd ps_build ps_build_simd $(PRODUCTS) *.o
-	$(MAKE) -C ../ProcessSandbox clean
+	-rm -rf nacl_build nacl_build_simd non_nacl_build non_nacl_build_simd ps_build ps_build_simd $(PRODUCTS) *.o
+	-$(MAKE) -C ../ProcessSandbox clean
