@@ -13,7 +13,7 @@ To build
 - Edit the variables at the top of the Makefile in the `builds` directory as
   appropriate for your machine
 - Build using the targets in this Makefile.  For instance,
-  `make example_dynamic_nacl` or `make run_dynamic_nacl`
+  `make x86/example_dynamic_nacl` or `make x64/run_dynamic_nacl`
 - The built files are found in the `builds` directory and its subdirectories;
   in particular, you can find `libjpeg.so` in `builds/*/.libs` where * is the
   appropriate subfolder for your desired build settings
