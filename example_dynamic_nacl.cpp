@@ -708,18 +708,11 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
   START_OUTER_TIMER();
   struct jpeg_decompress_struct* p_cinfo = (struct jpeg_decompress_struct*) mallocInSandbox(sandbox, sizeof(struct jpeg_decompress_struct));
 
-#ifdef USE_NACL
   /* We use our private extension JPEG error handler.
    * Note that this struct must live as long as the main JPEG parameter
    * struct, to avoid dangling-pointer problems.
    */
   struct my_error_mgr* p_jerr = (struct my_error_mgr*) mallocInSandbox(sandbox, sizeof(struct my_error_mgr));
-#elif defined(USE_PROCESS)
-  /* Use standard error manager - see comments farther below */
-  struct jpeg_error_mgr* p_jerr = (struct jpeg_error_mgr*) mallocInSandbox(sandbox, sizeof(struct jpeg_error_mgr));
-#else
-#error No sandbox type defined.
-#endif
 
   /* More stuff */
   JSAMPARRAY* p_buffer = (JSAMPARRAY*) mallocInSandbox(sandbox, sizeof(JSAMPARRAY));            /* Output row buffer */
@@ -734,12 +727,15 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
 
   /* Step 1: allocate and initialize JPEG decompression object */
 
-#ifdef USE_NACL
   /* We set up the normal JPEG error routines, then override error_exit. */
   p_cinfo->err = (struct jpeg_error_mgr *) getSandboxedAddress(sandbox, (uintptr_t) d_jpeg_std_error(&(p_jerr->pub)));
 
+#ifdef USE_NACL
   unsigned slotNumber = 0;
   uintptr_t callback = registerSandboxCallback(sandbox, slotNumber, (uintptr_t) my_error_exit_stub);
+#else
+  void* callback = sandbox->registerCallback((void*) my_error_exit);
+#endif
 
   if(!callback)
   {
@@ -759,12 +755,6 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
     d_jpeg_destroy_decompress(p_cinfo);
     return 0;
   }
-#elif defined(USE_PROCESS)
-  /* Since we don't have callbacks yet, we'll just do the same error handling as before.  Get one thing working at a time. */
-  p_cinfo->err = (struct jpeg_error_mgr *) getSandboxedAddress(sandbox, (uintptr_t) d_jpeg_std_error(p_jerr));
-#else
-#error No sandbox type defined.
-#endif
 
   /* Now we can initialize the JPEG decompression object. */
   d_jpeg_CreateDecompress(p_cinfo, JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_decompress_struct));
