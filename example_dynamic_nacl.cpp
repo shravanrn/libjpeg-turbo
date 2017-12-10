@@ -894,7 +894,8 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
  * temporary files are deleted if the program is interrupted.  See libjpeg.txt.
  */
 
-int dynamicLoad(char* path, char* libraryPath, char* sandbox_init_app)
+// For NACL we ignore maincore_as_str and sbcore_as_str.  For PROCESS we ignore sandbox_init_app.
+int dynamicLoad(char* path, char* libraryPath, char* sandbox_init_app, char* maincore_as_str, char* sbcore_as_str)
 {
   END_PROGRAM_TIMER();
 #ifdef USE_NACL
@@ -903,7 +904,16 @@ int dynamicLoad(char* path, char* libraryPath, char* sandbox_init_app)
   sandbox = createDlSandbox(libraryPath, sandbox_init_app);
 #elif defined(USE_PROCESS)
   printf("Creating process sandbox\n");
-  sandbox = new ProcessSandbox(libraryPath);
+  unsigned maincore, sbcore;
+  if(!sscanf(maincore_as_str, "%u", &maincore)) {
+    printf("Bad maincore argument\n");
+    return 0;
+  }
+  if(!sscanf(sbcore_as_str, "%u", &sbcore)) {
+    printf("Bad sandboxcore argument\n");
+    return 0;
+  }
+  sandbox = new ProcessSandbox(libraryPath, maincore, sbcore);
 #else
 #error No sandbox type defined.
 #endif
@@ -991,12 +1001,12 @@ int dynamicLoad(char* path, char* libraryPath, char* sandbox_init_app)
 int main(int argc, char** argv)
 {
   START_PROGRAM_TIMER();
-  if(argc < 6)
-  {
 #ifdef USE_NACL
+  if(argc < 6) {
     printf("No io files specified. Expected arg example input.jpeg output.jpeg libjpeg.so naclLibraryPath sandboxInitApp\n");
 #elif defined(USE_PROCESS)
-    printf("Error: expected 5 arguments\n  (1) input.jpeg\n  (2) output.jpeg\n  (3) libjpeg.so\n  (4) ProcessSandbox_otherside\n  (5) [ignored]\n");
+  if(argc < 8) {
+    printf("Error: expected 7 arguments\n  (1) input.jpeg\n  (2) output.jpeg\n  (3) libjpeg.so\n  (4) ProcessSandbox_otherside\n  (5) [ignored]\n  (6) main process core\n  (7) sandbox process core\n");
 #else
 #error No sandbox type defined.
 #endif
@@ -1005,8 +1015,13 @@ int main(int argc, char** argv)
 
   printf("Starting\n");
 
-  if(!dynamicLoad(argv[3], argv[4], argv[5]))
-  {
+#ifdef USE_NACL
+  if(!dynamicLoad(argv[3], argv[4], argv[5])) {
+#elif defined(USE_PROCESS)
+  if(!dynamicLoad(argv[3], argv[4], argv[5], argv[6], argv[7])) {
+#else
+#error No sandbox type defined.
+#endif
     printf("Dynamic load failed\n");
     return 1;
   }

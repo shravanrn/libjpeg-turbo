@@ -26,8 +26,10 @@ OTHERSIDE_EXEC64 ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg64
 # Username you are running the 'run' or 'dbg' targets under, for the purposes of the kill_old_processes target
 USER=cdisselk
 
-# Core to pin running processes to, for the 'run' and 'debug' targets
-CORE=0
+# Core to pin main process (or only process) to, for the 'run' and 'debug' targets
+MAINCORE=0
+# Core to pin sandbox process to, for the 'run_dynamic_ps' and 'debug_dynamic_ps' targets
+SANDBOXCORE=2
 
 PRODUCTS_BASENAMES=example_static example_dynamic_non_nacl example_dynamic_nacl example_dynamic_ps
 PRODUCTS32=$(addprefix $(BUILDS32)/,$(PRODUCTS_BASENAMES))
@@ -193,37 +195,37 @@ $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg64 : $(PS_SRCS) $(BUILDS64)/
 
 $(BUILDS32)/run_static : $(BUILDS32)/example_static
 	echo && echo static 32-bit: && echo && \
-	taskset -c $(CORE) $(GDB) ./$(BUILDS32)/example_static ../test.jpeg ../test_out.jpeg
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_static ../test.jpeg ../test_out.jpeg
 
 $(BUILDS64)/run_static : $(BUILDS64)/example_static
 	echo && echo static 64-bit: && echo && \
-	taskset -c $(CORE) $(GDB) ./$(BUILDS64)/example_static ../test.jpeg ../test_out.jpeg
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_static ../test.jpeg ../test_out.jpeg
 
 $(BUILDS32)/run_dynamic_non_nacl : $(BUILDS32)/example_dynamic_non_nacl
 	echo && echo dynamic_non_nacl 32-bit: && echo && \
-	taskset -c $(CORE) $(GDB) ./$(BUILDS32)/example_dynamic_non_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build/.libs/libjpeg.so
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_dynamic_non_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build/.libs/libjpeg.so
 
 $(BUILDS64)/run_dynamic_non_nacl : $(BUILDS64)/example_dynamic_non_nacl
 	echo && echo dynamic_non_nacl 64-bit: && echo && \
-	taskset -c $(CORE) $(GDB) ./$(BUILDS64)/example_dynamic_non_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build/.libs/libjpeg.so
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_non_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build/.libs/libjpeg.so
 
 $(BUILDS32)/run_dynamic_nacl : $(BUILDS32)/example_dynamic_nacl
 	echo && echo dynamic_nacl 32-bit: && echo && \
-	taskset -c $(CORE) $(GDB) ./$(BUILDS32)/example_dynamic_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/nacl_build/.libs/libjpeg.so $(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_dynamic_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/nacl_build/.libs/libjpeg.so $(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe
 
 $(BUILDS64)/run_dynamic_nacl : $(BUILDS64)/example_dynamic_nacl
 	echo && echo dynamic_nacl 64-bit: && echo && \
-	taskset -c $(CORE) $(GDB) ./$(BUILDS64)/example_dynamic_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/nacl_build/.libs/libjpeg.so $(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/nacl_build/.libs/libjpeg.so $(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe
 
 $(BUILDS32)/run_dynamic_ps : $(BUILDS32)/example_dynamic_ps $(OTHERSIDE_EXEC32) kill_old_processes
 	echo && echo dynamic_ps 32-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS32)/ps_build/.libs:$(LD_LIBRARY_PATH) \
-	taskset -c $(CORE) $(GDB) ./$(BUILDS32)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC32) notused
+	$(GDB) ./$(BUILDS32)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC32) notused $(MAINCORE) $(SANDBOXCORE)
 
 $(BUILDS64)/run_dynamic_ps : $(BUILDS64)/example_dynamic_ps $(OTHERSIDE_EXEC64) kill_old_processes
 	echo && echo dynamic_ps 64-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS64)/ps_build/.libs:$(LD_LIBRARY_PATH) \
-	taskset -c $(CORE) $(GDB) ./$(BUILDS64)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) notused
+	$(GDB) ./$(BUILDS64)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) notused $(MAINCORE) $(SANDBOXCORE)
 
 $(BUILDS32)/dbg_static : debug $(BUILDS32)/run_static
 $(BUILDS32)/dbg_dynamic_non_nacl : debug $(BUILDS32)/run_dynamic_non_nacl
