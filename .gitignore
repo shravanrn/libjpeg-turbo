@@ -29,3 +29,4 @@ missing
 /example_dynamic_nacl_fat_client
 /nacl_build_simd/
 /non_nacl_build_simd/
+/nacl_build_simd_clang/
