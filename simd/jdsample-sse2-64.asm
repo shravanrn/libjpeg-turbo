@@ -513,7 +513,11 @@ EXTN(jsimd_h2v1_upsample_sse2):
 
         mov     rcx, r10        ; rowctr
         test    rcx,rcx
+%ifdef COMPILING_FOR_NACL
         jz      near .return
+%else
+        jz      short .return
+%endif
 
         mov     rsi, r12 ; input_data
         mov     rdi, r13
@@ -562,7 +566,11 @@ EXTN(jsimd_h2v1_upsample_sse2):
         add     rsi, byte SIZEOF_JSAMPROW       ; input_data
         add     rdi, byte SIZEOF_JSAMPROW       ; output_data
         dec     rcx                             ; rowctr
+%ifdef COMPILING_FOR_NACL
         jg      near .rowloop
+%else
+        jg      short .rowloop
+%endif
 
 .return:
         uncollect_args
@@ -649,7 +657,11 @@ EXTN(jsimd_h2v2_upsample_sse2):
         add     rsi, byte 2*SIZEOF_XMMWORD      ; inptr
         add     rbx, byte 4*SIZEOF_XMMWORD      ; outptr0
         add     rdi, byte 4*SIZEOF_XMMWORD      ; outptr1
+%ifdef COMPILING_FOR_NACL
         jmp     near .columnloop
+%else
+        jmp     short .columnloop
+%endif
 
 .nextrow:
         pop     rsi

@@ -88,7 +88,11 @@ EXTN(jsimd_convsamp_float_sse2):
         add     rsi, byte 2*SIZEOF_JSAMPROW
         add     rdi, byte 2*DCTSIZE*SIZEOF_FAST_FLOAT
         dec     rcx
+%ifdef COMPILING_FOR_NACL
         jnz     near .convloop
+%else
+        jnz     short .convloop
+%endif
 
         pop     rbx
         uncollect_args
