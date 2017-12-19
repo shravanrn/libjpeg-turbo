@@ -101,7 +101,8 @@ EXTN(jsimd_h2v1_downsample_sse2):
         psrlw   xmm6,BYTE_BIT           ; xmm6={0xFF 0x00 0xFF 0x00 ..}
 
         mov     rsi, r14        ; input_data
-        mov     rdi, r15        ; output_data
+;        mov     rdi, r15        ; output_data
+        mov     rdi, r9        ; output_data
 .rowloop:
         push    rcx
         push    rdi
@@ -245,7 +246,8 @@ EXTN(jsimd_h2v2_downsample_sse2):
         psrlw   xmm6,BYTE_BIT           ; xmm6={0xFF 0x00 0xFF 0x00 ..}
 
         mov     rsi, r14        ; input_data
-        mov     rdi, r15        ; output_data
+;        mov     rdi, r15        ; output_data
+        mov     rdi, r9        ; output_data
 .rowloop:
         push    rcx
         push    rdi

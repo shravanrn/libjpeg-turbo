@@ -346,17 +346,17 @@ const_base:
         push r12
         push r13
         push r14
-        push r15
+        ;push r15
         mov r10, rdi
         mov r11, rsi
         mov r12, rdx
         mov r13, rcx
         mov r14, r8
-        mov r15, r9
+        ;mov r15, r9
 %endmacro
 
 %imacro uncollect_args 0
-        pop r15
+        ;pop r15
         pop r14
         pop r13
         pop r12
