@@ -134,7 +134,7 @@ EXTN(jsimd_idct_4x4_sse2):
 %ifndef NO_ZERO_COLUMN_TEST_4X4_SSE2
         mov     eax, DWORD [DWBLOCK(1,0,rsi,SIZEOF_JCOEF)]
         or      eax, DWORD [DWBLOCK(2,0,rsi,SIZEOF_JCOEF)]
-        jnz     short .columnDCT
+        jnz     near .columnDCT
 
         movdqa  xmm0, XMMWORD [XMMBLOCK(1,0,rsi,SIZEOF_JCOEF)]
         movdqa  xmm1, XMMWORD [XMMBLOCK(2,0,rsi,SIZEOF_JCOEF)]

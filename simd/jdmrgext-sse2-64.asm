@@ -356,7 +356,7 @@ EXTN(jsimd_h2v1_merged_upsample_sse2):
         punpckhdq xmmH,xmmG     ; xmmH=(0C 1C 2C 3C 0D 1D 2D 3D 0E 1E 2E 3E 0F 1F 2F 3F)
 
         cmp     rcx, byte SIZEOF_XMMWORD
-        jb      short .column_st32
+        jb      near .column_st32
 
         test    rdi, SIZEOF_XMMWORD-1
         jnz     short .out1

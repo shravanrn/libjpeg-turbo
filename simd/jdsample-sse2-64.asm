@@ -649,7 +649,7 @@ EXTN(jsimd_h2v2_upsample_sse2):
         add     rsi, byte 2*SIZEOF_XMMWORD      ; inptr
         add     rbx, byte 4*SIZEOF_XMMWORD      ; outptr0
         add     rdi, byte 4*SIZEOF_XMMWORD      ; outptr1
-        jmp     short .columnloop
+        jmp     near .columnloop
 
 .nextrow:
         pop     rsi

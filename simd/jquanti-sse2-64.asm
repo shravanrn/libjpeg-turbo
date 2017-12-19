@@ -83,7 +83,7 @@ EXTN(jsimd_convsamp_sse2):
         add     rsi, byte 4*SIZEOF_JSAMPROW
         add     rdi, byte 4*DCTSIZE*SIZEOF_DCTELEM
         dec     rcx
-        jnz     short .convloop
+        jnz     near .convloop
 
         pop     rbx
         uncollect_args

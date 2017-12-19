@@ -140,7 +140,7 @@ EXTN(jsimd_idct_islow_sse2):
         packsswb xmm1,xmm1
         movd    eax,xmm1
         test    rax,rax
-        jnz     short .columnDCT
+        jnz     near .columnDCT
 
         ; -- AC terms all zero
 

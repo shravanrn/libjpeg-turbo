@@ -88,7 +88,7 @@ EXTN(jsimd_convsamp_float_sse2):
         add     rsi, byte 2*SIZEOF_JSAMPROW
         add     rdi, byte 2*DCTSIZE*SIZEOF_FAST_FLOAT
         dec     rcx
-        jnz     short .convloop
+        jnz     near .convloop
 
         pop     rbx
         uncollect_args
