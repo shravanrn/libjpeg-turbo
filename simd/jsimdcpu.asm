@@ -40,7 +40,7 @@ EXTN(jpeg_simd_cpu_support):
 
         xor     edi,edi                 ; simd support flag
 
-%ifdef COMPILING_FOR_NACL
+%ifndef COMPILING_FOR_NACL
         pushfd
         pop     eax
         mov     edx,eax

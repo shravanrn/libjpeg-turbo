@@ -34,14 +34,13 @@ cd ..
 
 mkdir nacl_build_simd_clang
 cd nacl_build_simd_clang
-sh ../configure --host i686-pc-linux-gnu --disable-shared CFLAGS='-O3 -m32' LDFLAGS=-m32 CC=/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/i686-nacl-clang NASM="$NACL_NASM" NAFLAGS='-nacl -DCOMPILING_FOR_NACL'
+sh ../configure --host i686-pc-linux-gnu --disable-shared CFLAGS='-O3 -m32' LDFLAGS=-m32 CC=/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/i686-nacl-clang AR="/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/i686-nacl-ar" NASM="$NACL_NASM" NAFLAGS='-nacl -DCOMPILING_FOR_NACL'
 make clean
 make
 mkdir mainCombine
 cd mainCombine
 /home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/i686-nacl-ar -x ../.libs/libjpeg.a
-cp /home/shr/Code/nacl2/native_client/scons-out/nacl-x86-32/obj/src/trusted/dyn_ldr/dyn_ldr_sandbox_init.o ./
-/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/x86_64-nacl-clang -m32 ./*.o -o ./libjpeg.nexe
+/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib_raw/bin/x86_64-nacl-clang++ -m32 -B/home/shr/Code/nacl2/native_client/scons-out/nacl-x86-32/lib/ -Wl,-rpath-link,/home/shr/Code/nacl2/native_client/scons-out/nacl-x86-32/lib -Wl,-rpath-link,/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib_raw/x86_64-nacl/lib32 -Wl,-rpath-link,/home/shr/Code/nacl2/native_client/scons-out/nacl-x86-32/lib ./*.o -L/home/shr/Code/nacl2/native_client/scons-out/nacl-x86-32/lib -L/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib_raw/x86_64-nacl/lib32 -L/home/shr/Code/nacl2/native_client/scons-out/nacl-x86-32/lib -ldyn_ldr_sandbox_init -o ./libjpeg.nexe
 cd ../..
 
 mkdir non_nacl_build_clang_64
@@ -60,7 +59,7 @@ cd ..
 
 mkdir nacl_build_64
 cd nacl_build_64
-sh ../configure --without-simd --host x86_64-pc-linux-gnu CFLAGS='-O3 -m64 -fPIC' LDFLAGS='-m64 -fPIC' CC=/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/x86_64-nacl-clang NASM="$NACL_NASM" NAFLAGS='-nacl -DCOMPILING_FOR_NACL'
+sh ../configure --without-simd --host x86_64-pc-linux-gnu CFLAGS='-O3 -m64 -fPIC' LDFLAGS='-m64 -fPIC' CC=/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/x86_64-nacl-clang AR="/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/x86_64-nacl-ar" NASM="$NACL_NASM" NAFLAGS='-nacl -DCOMPILING_FOR_NACL'
 make clean
 make -j8
 mkdir mainCombine
@@ -71,7 +70,7 @@ cd ../..
 
 mkdir nacl_build_simd_64
 cd nacl_build_simd_64
-sh ../configure --host x86_64-pc-linux-gnu CFLAGS='-O3 -m64 -fPIC' LDFLAGS='-m64 -fPIC' CC=/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/x86_64-nacl-clang NASM="$NACL_NASM" NAFLAGS='-nacl -DCOMPILING_FOR_NACL'
+sh ../configure --host x86_64-pc-linux-gnu CFLAGS='-O3 -m64 -fPIC' LDFLAGS='-m64 -fPIC' CC=/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/x86_64-nacl-clang AR="/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/x86_64-nacl-ar" NASM="$NACL_NASM" NAFLAGS='-nacl -DCOMPILING_FOR_NACL'
 make clean
 make -j8
 mkdir mainCombine
