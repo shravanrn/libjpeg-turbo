@@ -127,8 +127,11 @@ EXTN(jsimd_idct_ifast_sse2):
         packsswb xmm1,xmm1
         movd    eax,xmm1
         test    rax,rax
+%ifdef COMPILING_FOR_NACL
+        jnz     near .columnDCT
+%else
         jnz     short .columnDCT
-
+%endif
         ; -- AC terms all zero
 
         movdqa  xmm0, XMMWORD [XMMBLOCK(0,0,rsi,SIZEOF_JCOEF)]
