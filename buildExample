@@ -32,11 +32,18 @@ make clean
 make
 cd ..
 
+mkdir non_nacl_build_simd_clang
+cd non_nacl_build_simd_clang
+sh ../configure --host i686-pc-linux-gnu CFLAGS='-O3 -m32' LDFLAGS=-m32 CC=clang
+make clean
+make
+cd ..
+
 mkdir nacl_build_simd_clang
 cd nacl_build_simd_clang
 sh ../configure --host i686-pc-linux-gnu --disable-shared CFLAGS='-O3 -m32' LDFLAGS=-m32 CC=/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/i686-nacl-clang AR="/home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/i686-nacl-ar" NASM="$NACL_NASM" NAFLAGS='-nacl -DCOMPILING_FOR_NACL'
 make clean
-make
+make -j8
 mkdir mainCombine
 cd mainCombine
 /home/shr/Code/nacl2/native_client/toolchain/linux_x86/pnacl_newlib/bin/i686-nacl-ar -x ../.libs/libjpeg.a
