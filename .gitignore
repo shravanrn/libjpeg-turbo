@@ -29,3 +29,7 @@ missing
 /example_dynamic_nacl_fat_client
 /nacl_build_*/
 /non_nacl_build_*/
+/example_dynamic_nacl_32
+/example_dynamic_nacl_64
+/example_dynamic_non_nacl_32
+/example_dynamic_non_nacl_64
