@@ -76,15 +76,8 @@ EXTN(jsimd_h2v1_downsample_sse2):
         add     rdi,rdx
         mov     al, JSAMPLE [rdi-1]
 
-%ifdef COMPILING_FOR_NACL
-.rep_replace:
-        mov     byte [rdi],al       ; Write the value in AL to memory
-        inc     rdi                 ; Bump EDI to next byte in the buffer
-        dec     rcx                 ; Decrement ECX by one position
-        jnz     .rep_replace        ; And loop again until ECX is 0
-%else
         rep stosb
-%endif
+
         pop     rcx
         pop     rax
 
@@ -235,15 +228,7 @@ EXTN(jsimd_h2v2_downsample_sse2):
         add     rdi,rdx
         mov     al, JSAMPLE [rdi-1]
 
-%ifdef COMPILING_FOR_NACL
-.rep_replace:
-        mov     byte [rdi],al       ; Write the value in AL to memory
-        inc     rdi                 ; Bump EDI to next byte in the buffer
-        dec     rcx                 ; Decrement ECX by one position
-        jnz     .rep_replace        ; And loop again until ECX is 0
-%else
         rep stosb
-%endif
 
         pop     rcx
         pop     rax
