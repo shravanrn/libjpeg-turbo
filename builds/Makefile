@@ -31,16 +31,16 @@ MAINCORE=0
 # Core to pin sandbox process to, for the 'run_dynamic_ps' and 'debug_dynamic_ps' targets
 SANDBOXCORE=2
 
-PRODUCTS_BASENAMES=example_static example_dynamic_non_nacl example_dynamic_nacl example_dynamic_ps
+PRODUCTS_BASENAMES=example_dynamic_non_nacl example_dynamic_nacl example_dynamic_ps
 PRODUCTS32=$(addprefix $(BUILDS32)/,$(PRODUCTS_BASENAMES))
 PRODUCTS64=$(addprefix $(BUILDS64)/,$(PRODUCTS_BASENAMES))
 PRODUCTS=$(PRODUCTS32) $(PRODUCTS64)
 
-RUN_BASENAMES=run_static run_dynamic_non_nacl run_dynamic_nacl run_dynamic_ps
+RUN_BASENAMES=run_dynamic_non_nacl run_dynamic_nacl run_dynamic_ps
 RUN32=$(addprefix $(BUILDS32)/,$(RUN_BASENAMES))
 RUN64=$(addprefix $(BUILDS64)/,$(RUN_BASENAMES))
 
-.PHONY : all all32 all64 run_all run_all32 run_all64 $(RUN32) $(RUN64) dbg_static dbg_dynamic_non_nacl dbg_dynamic_nacl dbg_dynamic_ps debug clean kill_old_processes
+.PHONY : all all32 all64 run_all run_all32 run_all64 $(RUN32) $(RUN64) dbg_dynamic_non_nacl dbg_dynamic_nacl dbg_dynamic_ps debug clean kill_old_processes
 
 all : $(PRODUCTS)
 all32 : $(PRODUCTS32)
@@ -141,12 +141,6 @@ $(BUILDS64)/non_nacl_build_simd :
 	make clean && \
 	make
 
-$(BUILDS32)/example_static : $(BUILDS32)/non_nacl_build $(BUILDS32)/non_nacl_build/.libs/libturbojpeg.a ../example.c
-	$(CC) $(CFLAGS32) -I$(BUILDS32)/non_nacl_build -o $@ ../example.c $(BUILDS32)/non_nacl_build/.libs/libturbojpeg.a
-
-$(BUILDS64)/example_static : $(BUILDS64)/non_nacl_build $(BUILDS64)/non_nacl_build/.libs/libturbojpeg.a ../example.c
-	$(CC) $(CFLAGS64) -I$(BUILDS64)/non_nacl_build -o $@ ../example.c $(BUILDS64)/non_nacl_build/.libs/libturbojpeg.a
-
 $(BUILDS32)/example_dynamic_non_nacl : ../example_dynamic_non_nacl.cpp $(BUILDS32)/non_nacl_build
 	$(CXX) $(CFLAGS32) -I$(BUILDS32)/non_nacl_build $< -o $@ -ldl
 
@@ -193,14 +187,6 @@ $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32 : $(PS_SRCS) $(BUILDS32)/
 $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg64 : $(PS_SRCS) $(BUILDS64)/ps_build
 	$(MAKE) -C $(PROCESS_SANDBOX_DIR) CFLAGS='$(CFLAGS64) -I.. -I$(BUILDS64)/ps_build' LIBFLAGS='-L.. -L$(BUILDS64)/ps_build/.libs' $(@F)
 
-$(BUILDS32)/run_static : $(BUILDS32)/example_static
-	echo && echo static 32-bit: && echo && \
-	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_static ../test.jpeg ../test_out.jpeg
-
-$(BUILDS64)/run_static : $(BUILDS64)/example_static
-	echo && echo static 64-bit: && echo && \
-	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_static ../test.jpeg ../test_out.jpeg
-
 $(BUILDS32)/run_dynamic_non_nacl : $(BUILDS32)/example_dynamic_non_nacl
 	echo && echo dynamic_non_nacl 32-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_dynamic_non_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build/.libs/libjpeg.so
@@ -227,11 +213,9 @@ $(BUILDS64)/run_dynamic_ps : $(BUILDS64)/example_dynamic_ps $(OTHERSIDE_EXEC64) 
 	LD_LIBRARY_PATH=$(BUILDS64)/ps_build/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS64)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) notused $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS32)/dbg_static : debug $(BUILDS32)/run_static
 $(BUILDS32)/dbg_dynamic_non_nacl : debug $(BUILDS32)/run_dynamic_non_nacl
 $(BUILDS32)/dbg_dynamic_nacl : debug $(BUILDS32)/run_dynamic_nacl
 $(BUILDS32)/dbg_dynamic_ps : debug $(BUILDS32)/run_dynamic_ps
-$(BUILDS64)/dbg_static : debug $(BUILDS64)/run_static
 $(BUILDS64)/dbg_dynamic_non_nacl : debug $(BUILDS64)/run_dynamic_non_nacl
 $(BUILDS64)/dbg_dynamic_nacl : debug $(BUILDS64)/run_dynamic_nacl
 $(BUILDS64)/dbg_dynamic_ps : debug $(BUILDS64)/run_dynamic_ps
