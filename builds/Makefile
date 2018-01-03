@@ -206,12 +206,12 @@ $(BUILDS64)/run_dynamic_nacl : $(BUILDS64)/example_dynamic_nacl
 $(BUILDS32)/run_dynamic_ps : $(BUILDS32)/example_dynamic_ps $(OTHERSIDE_EXEC32) kill_old_processes
 	echo && echo dynamic_ps 32-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS32)/ps_build/.libs:$(LD_LIBRARY_PATH) \
-	$(GDB) ./$(BUILDS32)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC32) notused $(MAINCORE) $(SANDBOXCORE)
+	$(GDB) ./$(BUILDS32)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC32) $(MAINCORE) $(SANDBOXCORE)
 
 $(BUILDS64)/run_dynamic_ps : $(BUILDS64)/example_dynamic_ps $(OTHERSIDE_EXEC64) kill_old_processes
 	echo && echo dynamic_ps 64-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS64)/ps_build/.libs:$(LD_LIBRARY_PATH) \
-	$(GDB) ./$(BUILDS64)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) notused $(MAINCORE) $(SANDBOXCORE)
+	$(GDB) ./$(BUILDS64)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
 
 $(BUILDS32)/dbg_dynamic_non_nacl : debug $(BUILDS32)/run_dynamic_non_nacl
 $(BUILDS32)/dbg_dynamic_nacl : debug $(BUILDS32)/run_dynamic_nacl
