@@ -56,87 +56,91 @@ define prepare_build =
 	cd $(1)
 endef
 
+SIMDFLAGS=
+NONSIMDFLAGS=--without-simd
+NACLFLAGS= NASM=$(NACL_NASM) NAFLAGS='-nacl -DCOMPILING_FOR_NACL'
+
 $(BUILDS32)/nacl_build :
 	-mkdir $(BUILDS32)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --without-simd --host $(HOST32) CFLAGS='$(CFLAGS32) -DUSE_NACL' LDFLAGS='$(LDFLAGS32)' CC=$(NACL_GCC) && \
+	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -DUSE_NACL' LDFLAGS='$(LDFLAGS32)' CC=$(NACL_GCC) $(NONSIMDFLAGS) $(NACLFLAGS) && \
 	make clean && \
 	make
 
 $(BUILDS64)/nacl_build :
 	-mkdir $(BUILDS64)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --without-simd --host $(HOST64) CFLAGS='$(CFLAGS64) -DUSE_NACL' LDFLAGS='$(LDFLAGS64)' CC=$(NACL_GCC) && \
+	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -DUSE_NACL' LDFLAGS='$(LDFLAGS64)' CC=$(NACL_GCC) $(NONSIMDFLAGS) $(NACLFLAGS) && \
 	make clean && \
 	make
 
 $(BUILDS32)/nacl_build_simd :
 	-mkdir $(BUILDS32)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -DUSE_NACL' LDFLAGS='$(LDFLAGS32)' CC=$(NACL_GCC) NASM=$(NACL_NASM) NAFLAGS='-nacl -DCOMPILING_FOR_NACL' && \
+	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -DUSE_NACL' LDFLAGS='$(LDFLAGS32)' CC=$(NACL_GCC) $(SIMDFLAGS) $(NACLFLAGS) && \
 	make clean && \
 	make
 
 $(BUILDS64)/nacl_build_simd :
 	-mkdir $(BUILDS64)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -DUSE_NACL' LDFLAGS='$(LDFLAGS64)' CC=$(NACL_GCC) NASM=$(NACL_NASM) NAFLAGS='-nacl -DCOMPILING_FOR_NACL' && \
+	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -DUSE_NACL' LDFLAGS='$(LDFLAGS64)' CC=$(NACL_GCC) $(SIMDFLAGS) $(NACLFLAGS) && \
 	make clean && \
 	make
 
 $(BUILDS32)/ps_build :
 	-mkdir $(BUILDS32)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --without-simd --host $(HOST32) CFLAGS='$(CFLAGS32) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS32)' CC=$(CC) && \
+	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS32)' CC=$(CC) $(NONSIMDFLAGS) && \
 	make clean && \
 	make
 
 $(BUILDS64)/ps_build :
 	-mkdir $(BUILDS64)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --without-simd --host $(HOST64) CFLAGS='$(CFLAGS64) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS64)' CC=$(CC) && \
+	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS64)' CC=$(CC) $(NONSIMDFLAGS) && \
 	make clean && \
 	make
 
 $(BUILDS32)/ps_build_simd :
 	-mkdir $(BUILDS32)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS32)' CC=$(CC) && \
+	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS32)' CC=$(CC) $(SIMDFLAGS) && \
 	make clean && \
 	make
 
 $(BUILDS64)/ps_build_simd :
 	-mkdir $(BUILDS64)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS64)' CC=$(CC) && \
+	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS64)' CC=$(CC) $(SIMDFLAGS) && \
 	make clean && \
 	make
 
 $(BUILDS32)/non_nacl_build :
 	-mkdir $(BUILDS32)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --without-simd -host $(HOST32) CFLAGS='$(CFLAGS32)' LDFLAGS='$(LDFLAGS32)' CC=$(CC) && \
+	sh ../../../configure -host $(HOST32) CFLAGS='$(CFLAGS32)' LDFLAGS='$(LDFLAGS32)' CC=$(CC) $(NONSIMDFLAGS) && \
 	make clean && \
 	make
 
 $(BUILDS64)/non_nacl_build :
 	-mkdir $(BUILDS64)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --without-simd -host $(HOST64) CFLAGS='$(CFLAGS64)' LDFLAGS='$(LDFLAGS64)' CC=$(CC) && \
+	sh ../../../configure -host $(HOST64) CFLAGS='$(CFLAGS64)' LDFLAGS='$(LDFLAGS64)' CC=$(CC) $(NONSIMDFLAGS) && \
 	make clean && \
 	make
 
 $(BUILDS32)/non_nacl_build_simd :
 	-mkdir $(BUILDS32)
 	$(call prepare_build,$@) && \
-	sh ../../../configure -host $(HOST32) CFLAGS='$(CFLAGS32)' LDFLAGS='$(LDFLAGS32)' CC=$(CC) && \
+	sh ../../../configure -host $(HOST32) CFLAGS='$(CFLAGS32)' LDFLAGS='$(LDFLAGS32)' CC=$(CC) $(SIMDFLAGS) && \
 	make clean && \
 	make
 
 $(BUILDS64)/non_nacl_build_simd :
 	-mkdir $(BUILDS64)
 	$(call prepare_build,$@) && \
-	sh ../../../configure -host $(HOST64) CFLAGS='$(CFLAGS64)' LDFLAGS='$(LDFLAGS64)' CC=$(CC) && \
+	sh ../../../configure -host $(HOST64) CFLAGS='$(CFLAGS64)' LDFLAGS='$(LDFLAGS64)' CC=$(CC) $(SIMDFLAGS) && \
 	make clean && \
 	make
 
