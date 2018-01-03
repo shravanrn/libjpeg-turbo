@@ -38,8 +38,15 @@
 //For dynamic lib loading
 #include <dlfcn.h>
 
-//For NaCl sandboxing
+// For sandboxing
+// Either USE_NACL or USE_PROCESS should be defined by the build system while compiling this file.
+#ifdef USE_NACL
 #include "dyn_ldr_lib.h"
+#elif defined(USE_PROCESS)
+#include "ProcessSandbox.h"
+#else
+#error No sandbox type defined.
+#endif
 
 #define PRINT_FUNCTION_TIMES
 #ifdef PRINT_FUNCTION_TIMES
@@ -108,7 +115,13 @@
  * RGB color and is described by:
  */
 
+#ifdef USE_NACL
 NaClSandbox* sandbox;
+#elif defined(USE_PROCESS)
+ProcessSandbox* sandbox;
+#else
+#error No sandbox type defined.
+#endif
 
 typedef struct jpeg_error_mgr * (*t_jpeg_std_error) (struct jpeg_error_mgr * err);
 typedef void (*t_jpeg_CreateCompress) (j_compress_ptr cinfo, int version, size_t structsize);
@@ -147,62 +160,101 @@ t_jpeg_destroy_decompress ptr_jpeg_destroy_decompress;
 struct jpeg_error_mgr * d_jpeg_std_error(struct jpeg_error_mgr * err)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(err), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, struct jpeg_error_mgr *, err);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_std_error);
   END_TIMER();
   return (struct jpeg_error_mgr *)functionCallReturnPtr(threadData);
+#elif defined(USE_PROCESS)
+  auto retval = sandbox->inv_jpeg_std_error(err);
+  END_TIMER();
+  return retval;
+#else
+#error No sandbox type defined.
+#endif
 }
 void d_jpeg_CreateCompress(j_compress_ptr cinfo, int version, size_t structsize)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(version) + sizeof(structsize), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, int, version);
   PUSH_VAL_TO_STACK(threadData, size_t, structsize);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_CreateCompress);
+#elif defined(USE_PROCESS)
+  sandbox->inv_jpeg_CreateCompress(cinfo, version, structsize);
+#else
+#error No sandbox type defined.
+#endif
   END_TIMER();
 }
 void d_jpeg_mem_dest(j_compress_ptr cinfo, unsigned char ** outbuffer, unsigned long * outsize)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(outbuffer) + sizeof(outsize), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   PUSH_PTR_TO_STACK(threadData, unsigned char **, outbuffer);
   PUSH_PTR_TO_STACK(threadData, unsigned long *, outsize);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_mem_dest);
+#elif defined(USE_PROCESS)
+  sandbox->inv_jpeg_mem_dest(cinfo, outbuffer, outsize);
+#else
+#error No sandbox type defined.
+#endif
   END_TIMER();
 }
 void d_jpeg_set_defaults(j_compress_ptr cinfo)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_set_defaults);
+#elif defined(USE_PROCESS)
+  sandbox->inv_jpeg_set_defaults(cinfo);
+#else
+#error No sandbox type defined.
+#endif
   END_TIMER();
 }
 void d_jpeg_set_quality(j_compress_ptr cinfo, int quality, boolean force_baseline)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(quality) + sizeof(force_baseline), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, int, quality);
   PUSH_VAL_TO_STACK(threadData, boolean, force_baseline);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_set_quality);
+#elif defined(USE_PROCESS)
+  sandbox->inv_jpeg_set_quality(cinfo, quality, force_baseline);
+#else
+#error No sandbox type defined.
+#endif
   END_TIMER();
 }
 void d_jpeg_start_compress(j_compress_ptr cinfo, boolean write_all_tables)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(write_all_tables), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, boolean, write_all_tables);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_start_compress);
+#elif defined(USE_PROCESS)
+  sandbox->inv_jpeg_start_compress(cinfo, write_all_tables);
+#else
+#error No sandbox type defined.
+#endif
   END_TIMER();
 }
 JDIMENSION d_jpeg_write_scanlines(j_compress_ptr cinfo, JSAMPARRAY scanlines, JDIMENSION num_lines)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(scanlines) + sizeof(num_lines), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   PUSH_PTR_TO_STACK(threadData, JSAMPARRAY, scanlines);
@@ -210,65 +262,113 @@ JDIMENSION d_jpeg_write_scanlines(j_compress_ptr cinfo, JSAMPARRAY scanlines, JD
   invokeFunctionCall(threadData, (void *)ptr_jpeg_write_scanlines);
   END_TIMER();
   return (JDIMENSION) functionCallReturnRawPrimitiveInt(threadData);
+#elif defined(USE_PROCESS)
+  auto retval = sandbox->inv_jpeg_write_scanlines(cinfo, scanlines, num_lines);
+  END_TIMER();
+  return retval;
+#else
+#error No sandbox type defined.
+#endif
 }
 void d_jpeg_finish_compress(j_compress_ptr cinfo)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_finish_compress);
+#elif defined(USE_PROCESS)
+  sandbox->inv_jpeg_finish_compress(cinfo);
+#else
+#error No sandbox type defined.
+#endif
   END_TIMER();
 }
 void d_jpeg_destroy_compress(j_compress_ptr cinfo)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_compress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_destroy_compress);
+#elif defined(USE_PROCESS)
+  sandbox->inv_jpeg_destroy_compress(cinfo);
+#else
+#error No sandbox type defined.
+#endif
   END_TIMER();
 }
 void d_jpeg_CreateDecompress(j_decompress_ptr cinfo, int version, size_t structsize)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(version) + sizeof(structsize), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, int, version);
   PUSH_VAL_TO_STACK(threadData, size_t, structsize);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_CreateDecompress);
+#elif defined(USE_PROCESS)
+  sandbox->inv_jpeg_CreateDecompress(cinfo, version, structsize);
+#else
+#error No sandbox type defined.
+#endif
   END_TIMER();
 }
 void d_jpeg_mem_src(j_decompress_ptr cinfo, unsigned char * inbuffer, unsigned long insize)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(inbuffer) + sizeof(insize), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   PUSH_PTR_TO_STACK(threadData, unsigned char *, inbuffer);
   PUSH_VAL_TO_STACK(threadData, unsigned long, insize);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_mem_src);
+#elif defined(USE_PROCESS)
+  sandbox->inv_jpeg_mem_src(cinfo, inbuffer, insize);
+#else
+#error No sandbox type defined.
+#endif
   END_TIMER();
 }
 int d_jpeg_read_header(j_decompress_ptr cinfo, boolean require_image)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(require_image), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, boolean, require_image);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_read_header);
   END_TIMER();
   return (int) functionCallReturnRawPrimitiveInt(threadData);
+#elif defined(USE_PROCESS)
+  auto retval = sandbox->inv_jpeg_read_header(cinfo, require_image);
+  END_TIMER();
+  return retval;
+#else
+#error No sandbox type defined.
+#endif
 }
 boolean d_jpeg_start_decompress(j_decompress_ptr cinfo)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_start_decompress);
   END_TIMER();
   return (boolean) functionCallReturnRawPrimitiveInt(threadData);
+#elif defined(USE_PROCESS)
+  auto retval = sandbox->inv_jpeg_start_decompress(cinfo);
+  END_TIMER();
+  return retval;
+#else
+#error No sandbox type defined.
+#endif
 }
 JDIMENSION d_jpeg_read_scanlines(j_decompress_ptr cinfo, JSAMPARRAY scanlines, JDIMENSION max_lines)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(scanlines) + sizeof(max_lines), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   PUSH_PTR_TO_STACK(threadData, JSAMPARRAY, scanlines);
@@ -276,28 +376,50 @@ JDIMENSION d_jpeg_read_scanlines(j_decompress_ptr cinfo, JSAMPARRAY scanlines, J
   invokeFunctionCall(threadData, (void *)ptr_jpeg_read_scanlines);
   END_TIMER();
   return (JDIMENSION) functionCallReturnRawPrimitiveInt(threadData);
+#elif defined(USE_PROCESS)
+  auto retval = sandbox->inv_jpeg_read_scanlines(cinfo, scanlines, max_lines);
+  END_TIMER();
+  return retval;
+#else
+#error No sandbox type defined.
+#endif
 }
 boolean d_jpeg_finish_decompress(j_decompress_ptr cinfo)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_finish_decompress);
   END_TIMER();
   return (boolean) functionCallReturnRawPrimitiveInt(threadData);
+#elif defined(USE_PROCESS)
+  auto retval = sandbox->inv_jpeg_finish_decompress(cinfo);
+  END_TIMER();
+  return retval;
+#else
+#error No sandbox type defined.
+#endif
 }
 void d_jpeg_destroy_decompress(j_decompress_ptr cinfo)
 {
   START_TIMER();
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_decompress_ptr, cinfo);
   invokeFunctionCall(threadData, (void *)ptr_jpeg_destroy_decompress);
+#elif defined(USE_PROCESS)
+  sandbox->inv_jpeg_destroy_decompress(cinfo);
+#else
+#error No sandbox type defined.
+#endif
   END_TIMER();
 }
 
 JSAMPARRAY d_alloc_sarray(void* alloc_sarray, j_common_ptr cinfo, int pool_id, JDIMENSION samplesperrow, JDIMENSION numrows)
 {
   //not counted in timer as this function is not counted in the non nacl benchmark
+#ifdef USE_NACL
   NaClSandbox_Thread* threadData = preFunctionCall(sandbox, sizeof(cinfo) + sizeof(pool_id) + sizeof(samplesperrow) + sizeof(numrows), 0 /* size of any arrays being pushed on the stack */);
   PUSH_PTR_TO_STACK(threadData, j_common_ptr, cinfo);
   PUSH_VAL_TO_STACK(threadData, int, pool_id);
@@ -305,6 +427,11 @@ JSAMPARRAY d_alloc_sarray(void* alloc_sarray, j_common_ptr cinfo, int pool_id, J
   PUSH_VAL_TO_STACK(threadData, JDIMENSION, numrows);
   invokeFunctionCall(threadData, alloc_sarray);
   return (JSAMPARRAY)functionCallReturnPtr(threadData);
+#elif defined(USE_PROCESS)
+  return sandbox->inv_alloc_sarray(alloc_sarray, cinfo, pool_id, samplesperrow, numrows);
+#else
+#error No sandbox type defined.
+#endif
 }
 
 /* extern */JSAMPLE * image_buffer = NULL;  /* Points to large array of R,G,B-order data */
@@ -324,6 +451,17 @@ void put_scanline_someplace(JSAMPROW rowBuffer, int row_stride)
   curr_image_row++;
 }
 
+#ifdef USE_PROCESS
+static void* mallocInSandbox(ProcessSandbox* sandbox, size_t size) {
+  return sandbox->mallocInSandbox(size);
+}
+static void freeInSandbox(ProcessSandbox* sandbox, void* ptr) {
+  sandbox->freeInSandbox(ptr);
+}
+#define SANDBOX_CALLBACK
+#define getSandboxedAddress(sb, ptr) ptr
+#define getUnsandboxedAddress(sb, ptr) ptr
+#endif
 
 /*
  * Sample routine for JPEG compression.  We assume that the target file name
@@ -543,6 +681,7 @@ my_error_exit (j_common_ptr cinfo)
   longjmp(myerr->setjmp_buffer, 1);
 }
 
+#ifdef USE_NACL
 SANDBOX_CALLBACK void my_error_exit_stub(uintptr_t sandboxPtr)
 {
   NaClSandbox* sandboxC = (NaClSandbox*) sandboxPtr;
@@ -552,6 +691,7 @@ SANDBOX_CALLBACK void my_error_exit_stub(uintptr_t sandboxPtr)
   //We should not assume anything about - need to have some sort of validation here
   my_error_exit(cinfo);
 }
+#endif
 
 /*
  * Sample routine for JPEG decompression.  We assume that the source file name
@@ -590,8 +730,12 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
   /* We set up the normal JPEG error routines, then override error_exit. */
   p_cinfo->err = (struct jpeg_error_mgr *) getSandboxedAddress(sandbox, (uintptr_t) d_jpeg_std_error(&(p_jerr->pub)));
 
+#ifdef USE_NACL
   unsigned slotNumber = 0;
   uintptr_t callback = registerSandboxCallback(sandbox, slotNumber, (uintptr_t) my_error_exit_stub);
+#else
+  void* callback = sandbox->registerCallback((void*) my_error_exit);
+#endif
 
   if(!callback)
   {
@@ -611,6 +755,7 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
     d_jpeg_destroy_decompress(p_cinfo);
     return 0;
   }
+
   /* Now we can initialize the JPEG decompression object. */
   d_jpeg_CreateDecompress(p_cinfo, JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_decompress_struct));
 
@@ -706,7 +851,9 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
    * think that jpeg_destroy can do an error exit, but why assume anything...)
    */
 
+#ifdef USE_NACL
   unregisterSandboxCallback(sandbox, slotNumber);
+#endif
 
   freeInSandbox(sandbox, p_cinfo);
   freeInSandbox(sandbox, p_jerr);
@@ -747,13 +894,29 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
  * temporary files are deleted if the program is interrupted.  See libjpeg.txt.
  */
 
-int dynamicLoad(char* path, char* libraryPath)
+// For NACL we ignore maincore_as_str and sbcore_as_str.
+int dynamicLoad(char* path, char* libraryPath, char* maincore_as_str, char* sbcore_as_str)
 {
   END_PROGRAM_TIMER();
+#ifdef USE_NACL
   printf("Creating NaCl Sandbox for %s\n", path);
-
   initializeDlSandboxCreator(0 /* Should enable detailed logging */);
   sandbox = createDlSandbox(libraryPath, path);
+#elif defined(USE_PROCESS)
+  printf("Creating process sandbox\n");
+  unsigned maincore, sbcore;
+  if(!sscanf(maincore_as_str, "%u", &maincore)) {
+    printf("Bad maincore argument\n");
+    return 0;
+  }
+  if(!sscanf(sbcore_as_str, "%u", &sbcore)) {
+    printf("Bad sandboxcore argument\n");
+    return 0;
+  }
+  sandbox = new ProcessSandbox(libraryPath, maincore, sbcore);
+#else
+#error No sandbox type defined.
+#endif
 
   if(!sandbox)
   {
@@ -763,6 +926,7 @@ int dynamicLoad(char* path, char* libraryPath)
 
   START_PROGRAM_TIMER();
 
+#ifdef USE_NACL
   printf("Loading symbols\n");
 
   void* p_jpeg_std_error = symbolTableLookupInSandbox(sandbox, "jpeg_std_error");
@@ -820,6 +984,7 @@ int dynamicLoad(char* path, char* libraryPath)
   *((void **) &ptr_jpeg_destroy_decompress) = p_jpeg_destroy_decompress;
 
   printf("Loaded symbols\n");
+#endif // USE_NACL
 
   return 1;
 }
@@ -827,16 +992,27 @@ int dynamicLoad(char* path, char* libraryPath)
 int main(int argc, char** argv)
 {
   START_PROGRAM_TIMER();
-  if(argc < 5)
-  { 
+#ifdef USE_NACL
+  if(argc < 5) {
     printf("No io files specified. Expected arg example input.jpeg output.jpeg libjpeg.nexe naclLibraryPath\n");
+#elif defined(USE_PROCESS)
+  if(argc < 7) {
+    printf("Error: expected 7 arguments\n  (1) input.jpeg\n  (2) output.jpeg\n  (3) libjpeg.so\n  (4) ProcessSandbox_otherside\n  (5) main process core\n  (6) sandbox process core\n");
+#else
+#error No sandbox type defined.
+#endif
     return 1;
   }
 
   printf("Starting\n");
 
-  if(!dynamicLoad(argv[3], argv[4]))
-  {
+#ifdef USE_NACL
+  if(!dynamicLoad(argv[3], argv[4], NULL, NULL)) {
+#elif defined(USE_PROCESS)
+  if(!dynamicLoad(argv[3], argv[4], argv[5], argv[6])) {
+#else
+#error No sandbox type defined.
+#endif
     printf("Dynamic load failed\n");
     return 1;
   }
