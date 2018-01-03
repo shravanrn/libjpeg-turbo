@@ -17,7 +17,6 @@ NACL_NASM=/home/cdisselk/CSE227/NASM_NaCl/nasm
 SANDBOXING_NACL_DIR=/home/cdisselk/CSE227/Sandboxing_NaCl
 NACL_GCC=$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/bin/x86_64-nacl-gcc
 PROCESS_SANDBOX_DIR=/home/cdisselk/CSE227/poc
-PS_SRCS=$(wildcard $(PROCESS_SANDBOX_DIR)/*.cpp $(PROCESS_SANDBOX_DIR)/*.h)
 
 # paths to the appropriate ProcessSandbox_otherside executables
 OTHERSIDE_EXEC32 ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32
@@ -201,22 +200,6 @@ $(BUILDS32)/example_dynamic_ps_simd : $(BUILDS32)/example_dynamic_ps_simd.o $(PR
 $(BUILDS64)/example_dynamic_ps_simd : $(BUILDS64)/example_dynamic_ps_simd.o $(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg64.a
 	$(CXX) $(CFLAGS64) $^ -o $@ -lrt -lpthread
 
-# Assumes non-simd
-$(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg32.a : $(PS_SRCS) $(BUILDS32)/ps_build
-	$(MAKE) -C $(PROCESS_SANDBOX_DIR) CFLAGS='$(CFLAGS32) -I.. -I$(BUILDS32)/ps_build' LIBFLAGS='-L.. -L$(BUILDS32)/ps_build/.libs' $(@F)
-
-# Assumes non-simd
-$(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg64.a : $(PS_SRCS) $(BUILDS64)/ps_build
-	$(MAKE) -C $(PROCESS_SANDBOX_DIR) CFLAGS='$(CFLAGS64) -I.. -I$(BUILDS64)/ps_build' LIBFLAGS='-L.. -L$(BUILDS64)/ps_build/.libs' $(@F)
-
-# Assumes non-simd
-$(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32 : $(PS_SRCS) $(BUILDS32)/ps_build
-	$(MAKE) -C $(PROCESS_SANDBOX_DIR) CFLAGS='$(CFLAGS32) -I.. -I$(BUILDS32)/ps_build' LIBFLAGS='-L.. -L$(BUILDS32)/ps_build/.libs' $(@F)
-
-# Assumes non-simd
-$(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg64 : $(PS_SRCS) $(BUILDS64)/ps_build
-	$(MAKE) -C $(PROCESS_SANDBOX_DIR) CFLAGS='$(CFLAGS64) -I.. -I$(BUILDS64)/ps_build' LIBFLAGS='-L.. -L$(BUILDS64)/ps_build/.libs' $(@F)
-
 $(BUILDS32)/run_dynamic_non_nacl : $(BUILDS32)/example_dynamic_non_nacl
 	echo && echo dynamic_non_nacl 32-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_dynamic_non_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build/.libs/libjpeg.so
@@ -292,4 +275,3 @@ kill_old_processes :
 
 clean :
 	-rm -rf $(BUILDS32) $(BUILDS64) *.o
-	-$(MAKE) -C $(PROCESS_SANDBOX_DIR) clean
