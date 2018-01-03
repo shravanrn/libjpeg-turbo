@@ -147,16 +147,34 @@ $(BUILDS32)/example_dynamic_non_nacl : ../example_dynamic_non_nacl.cpp $(BUILDS3
 $(BUILDS64)/example_dynamic_non_nacl : ../example_dynamic_non_nacl.cpp $(BUILDS64)/non_nacl_build
 	$(CXX) $(CFLAGS64) -I$(BUILDS64)/non_nacl_build $< -o $@ -ldl
 
+$(BUILDS32)/example_dynamic_non_nacl_simd : ../example_dynamic_non_nacl.cpp $(BUILDS32)/non_nacl_build_simd
+	$(CXX) $(CFLAGS32) -I$(BUILDS32)/non_nacl_build_simd $< -o $@ -ldl
+
+$(BUILDS64)/example_dynamic_non_nacl_simd : ../example_dynamic_non_nacl.cpp $(BUILDS64)/non_nacl_build_simd
+	$(CXX) $(CFLAGS64) -I$(BUILDS64)/non_nacl_build_simd $< -o $@ -ldl
+
 $(BUILDS32)/example_dynamic_nacl.o : ../example_dynamic_nacl.cpp $(BUILDS32)/nacl_build
 	$(CXX) -c $(CFLAGS32) -DUSE_NACL -I$(BUILDS32)/nacl_build -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@
 
 $(BUILDS64)/example_dynamic_nacl.o : ../example_dynamic_nacl.cpp $(BUILDS64)/nacl_build
 	$(CXX) -c $(CFLAGS64) -DUSE_NACL -I$(BUILDS64)/nacl_build -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@
 
+$(BUILDS32)/example_dynamic_nacl_simd.o : ../example_dynamic_nacl.cpp $(BUILDS32)/nacl_build_simd
+	$(CXX) -c $(CFLAGS32) -DUSE_NACL -I$(BUILDS32)/nacl_build_simd -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@
+
+$(BUILDS64)/example_dynamic_nacl_simd.o : ../example_dynamic_nacl.cpp $(BUILDS64)/nacl_build_simd
+	$(CXX) -c $(CFLAGS64) -DUSE_NACL -I$(BUILDS64)/nacl_build_simd -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@
+
 $(BUILDS32)/example_dynamic_nacl : $(BUILDS32)/example_dynamic_nacl.o
 	$(CXX) $(CFLAGS32) $< -o $@ -Wl,-rpath=$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_32 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_32 -lrt -lpthread
 
 $(BUILDS64)/example_dynamic_nacl : $(BUILDS64)/example_dynamic_nacl.o
+	$(CXX) $(CFLAGS64) $< -o $@ -Wl,-rpath=$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_32 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_32 -lrt -lpthread
+
+$(BUILDS32)/example_dynamic_nacl_simd : $(BUILDS32)/example_dynamic_nacl_simd.o
+	$(CXX) $(CFLAGS32) $< -o $@ -Wl,-rpath=$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_32 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_32 -lrt -lpthread
+
+$(BUILDS64)/example_dynamic_nacl_simd : $(BUILDS64)/example_dynamic_nacl_simd.o
 	$(CXX) $(CFLAGS64) $< -o $@ -Wl,-rpath=$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_32 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_32 -lrt -lpthread
 
 $(BUILDS32)/example_dynamic_ps.o : ../example_dynamic_nacl.cpp $(BUILDS32)/ps_build
@@ -165,10 +183,22 @@ $(BUILDS32)/example_dynamic_ps.o : ../example_dynamic_nacl.cpp $(BUILDS32)/ps_bu
 $(BUILDS64)/example_dynamic_ps.o : ../example_dynamic_nacl.cpp $(BUILDS64)/ps_build
 	$(CXX) -c $(CFLAGS64) -DUSE_PROCESS -I$(BUILDS64)/ps_build -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
 
+$(BUILDS32)/example_dynamic_ps_simd.o : ../example_dynamic_nacl.cpp $(BUILDS32)/ps_build_simd
+	$(CXX) -c $(CFLAGS32) -DUSE_PROCESS -I$(BUILDS32)/ps_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
+
+$(BUILDS64)/example_dynamic_ps_simd.o : ../example_dynamic_nacl.cpp $(BUILDS64)/ps_build_simd
+	$(CXX) -c $(CFLAGS64) -DUSE_PROCESS -I$(BUILDS64)/ps_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
+
 $(BUILDS32)/example_dynamic_ps : $(BUILDS32)/example_dynamic_ps.o $(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg32.a
 	$(CXX) $(CFLAGS32) $^ -o $@ -lrt -lpthread
 
 $(BUILDS64)/example_dynamic_ps : $(BUILDS64)/example_dynamic_ps.o $(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg64.a
+	$(CXX) $(CFLAGS64) $^ -o $@ -lrt -lpthread
+
+$(BUILDS32)/example_dynamic_ps_simd : $(BUILDS32)/example_dynamic_ps_simd.o $(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg32.a
+	$(CXX) $(CFLAGS32) $^ -o $@ -lrt -lpthread
+
+$(BUILDS64)/example_dynamic_ps_simd : $(BUILDS64)/example_dynamic_ps_simd.o $(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg64.a
 	$(CXX) $(CFLAGS64) $^ -o $@ -lrt -lpthread
 
 # Assumes non-simd
@@ -195,6 +225,14 @@ $(BUILDS64)/run_dynamic_non_nacl : $(BUILDS64)/example_dynamic_non_nacl
 	echo && echo dynamic_non_nacl 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_non_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build/.libs/libjpeg.so
 
+$(BUILDS32)/run_dynamic_non_nacl_simd : $(BUILDS32)/example_dynamic_non_nacl_simd
+	echo && echo dynamic_non_nacl_simd 32-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_dynamic_non_nacl_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build_simd/.libs/libjpeg.so
+
+$(BUILDS64)/run_dynamic_non_nacl_simd : $(BUILDS64)/example_dynamic_non_nacl_simd
+	echo && echo dynamic_non_nacl_simd 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_non_nacl_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so
+
 $(BUILDS32)/run_dynamic_nacl : $(BUILDS32)/example_dynamic_nacl
 	echo && echo dynamic_nacl 32-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_dynamic_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/nacl_build/.libs/libjpeg.so $(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe
@@ -202,6 +240,14 @@ $(BUILDS32)/run_dynamic_nacl : $(BUILDS32)/example_dynamic_nacl
 $(BUILDS64)/run_dynamic_nacl : $(BUILDS64)/example_dynamic_nacl
 	echo && echo dynamic_nacl 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/nacl_build/.libs/libjpeg.so $(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe
+
+$(BUILDS32)/run_dynamic_nacl_simd : $(BUILDS32)/example_dynamic_nacl_simd
+	echo && echo dynamic_nacl_simd 32-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_dynamic_nacl_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/nacl_build_simd/.libs/libjpeg.so $(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe
+
+$(BUILDS64)/run_dynamic_nacl_simd : $(BUILDS64)/example_dynamic_nacl_simd
+	echo && echo dynamic_nacl_simd 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_nacl_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/nacl_build_simd/.libs/libjpeg.so $(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/nacl_x86_glibc/x86_64-nacl/lib32/ $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32-glibc/staging/dyn_ldr_sandbox_init.nexe
 
 $(BUILDS32)/run_dynamic_ps : $(BUILDS32)/example_dynamic_ps $(OTHERSIDE_EXEC32) kill_old_processes
 	echo && echo dynamic_ps 32-bit: && echo && \
@@ -213,12 +259,28 @@ $(BUILDS64)/run_dynamic_ps : $(BUILDS64)/example_dynamic_ps $(OTHERSIDE_EXEC64) 
 	LD_LIBRARY_PATH=$(BUILDS64)/ps_build/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS64)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
 
+$(BUILDS32)/run_dynamic_ps_simd : $(BUILDS32)/example_dynamic_ps_simd $(OTHERSIDE_EXEC32) kill_old_processes
+	echo && echo dynamic_ps_simd 32-bit: && echo && \
+	LD_LIBRARY_PATH=$(BUILDS32)/ps_build_simd/.libs:$(LD_LIBRARY_PATH) \
+	$(GDB) ./$(BUILDS32)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/ps_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC32) $(MAINCORE) $(SANDBOXCORE)
+
+$(BUILDS64)/run_dynamic_ps_simd : $(BUILDS64)/example_dynamic_ps_simd $(OTHERSIDE_EXEC64) kill_old_processes
+	echo && echo dynamic_ps_simd 64-bit: && echo && \
+	LD_LIBRARY_PATH=$(BUILDS64)/ps_build_simd/.libs:$(LD_LIBRARY_PATH) \
+	$(GDB) ./$(BUILDS64)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/ps_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
+
 $(BUILDS32)/dbg_dynamic_non_nacl : debug $(BUILDS32)/run_dynamic_non_nacl
+$(BUILDS32)/dbg_dynamic_non_nacl_simd : debug $(BUILDS32)/run_dynamic_non_nacl_simd
 $(BUILDS32)/dbg_dynamic_nacl : debug $(BUILDS32)/run_dynamic_nacl
+$(BUILDS32)/dbg_dynamic_nacl_simd : debug $(BUILDS32)/run_dynamic_nacl_simd
 $(BUILDS32)/dbg_dynamic_ps : debug $(BUILDS32)/run_dynamic_ps
+$(BUILDS32)/dbg_dynamic_ps_simd : debug $(BUILDS32)/run_dynamic_ps_simd
 $(BUILDS64)/dbg_dynamic_non_nacl : debug $(BUILDS64)/run_dynamic_non_nacl
+$(BUILDS64)/dbg_dynamic_non_nacl_simd : debug $(BUILDS64)/run_dynamic_non_nacl_simd
 $(BUILDS64)/dbg_dynamic_nacl : debug $(BUILDS64)/run_dynamic_nacl
+$(BUILDS64)/dbg_dynamic_nacl_simd : debug $(BUILDS64)/run_dynamic_nacl_simd
 $(BUILDS64)/dbg_dynamic_ps : debug $(BUILDS64)/run_dynamic_ps
+$(BUILDS64)/dbg_dynamic_ps_simd : debug $(BUILDS64)/run_dynamic_ps_simd
 
 debug :
 	$(eval GDB ?= gdb --args)
