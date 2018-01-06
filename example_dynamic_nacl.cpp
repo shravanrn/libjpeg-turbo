@@ -1095,7 +1095,9 @@ int main(int argc, char** argv)
 
   freeInSandbox(sandbox, image_buffer);
 
-  fwrite(*p_outbuffer, *p_outsize, 1, outfile);
+  unsigned char * outbuffer_contents = (unsigned char *) getUnsandboxedAddress(sandbox, (uintptr_t) *p_outbuffer);
+
+  fwrite(outbuffer_contents, *p_outsize, 1, outfile);
   fclose(outfile);
   fclose(infile);
   freeInSandbox(sandbox, fileBuff);
