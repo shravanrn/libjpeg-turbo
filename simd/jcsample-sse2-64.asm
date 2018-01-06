@@ -209,11 +209,7 @@ EXTN(jsimd_h2v2_downsample_sse2):
         push    rcx
         shl     rcx,1                           ; output_cols * 2
         sub     rcx,rdx
-%ifdef COMPILING_FOR_NACL
-        jle     near .expand_end
-%else
         jle     short .expand_end
-%endif
         mov     rax, r11
         test    rax,rax
         jle     short .expand_end

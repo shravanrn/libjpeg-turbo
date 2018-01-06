@@ -155,11 +155,7 @@ EXTN(jsimd_h2v1_downsample_sse2):
         cmp     ecx, byte SIZEOF_XMMWORD
         jae     short .columnloop
         test    ecx,ecx
-%ifdef COMPILING_FOR_NACL
-        jnz     near .columnloop_r8
-%else
         jnz     short .columnloop_r8
-%endif
 
         pop     esi
         pop     edi

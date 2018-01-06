@@ -343,11 +343,7 @@ EXTN(jsimd_h2v1_merged_upsample_mmx):
         movq    MMWORD [edi+3*SIZEOF_MMWORD], mmH
 
         sub     ecx, byte SIZEOF_MMWORD
-%ifdef COMPILING_FOR_NACL
-        jz      near .endcolumn
-%else
         jz      short .endcolumn
-%endif
 
         add     edi, byte RGB_PIXELSIZE*SIZEOF_MMWORD   ; outptr
         add     esi, byte SIZEOF_MMWORD                 ; inptr0

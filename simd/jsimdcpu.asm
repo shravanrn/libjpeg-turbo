@@ -51,21 +51,13 @@ EXTN(jpeg_simd_cpu_support):
         pop     eax
         xor     eax,edx
 %endif
-%ifdef COMPILING_FOR_NACL
-        jz      near .return           ; CPUID is not supported
-%else
         jz      short .return           ; CPUID is not supported
-%endif
 
         ; Check for MMX instruction support
         xor     eax,eax
         cpuid
         test    eax,eax
-%ifdef COMPILING_FOR_NACL
-        jz      near .return
-%else
         jz      short .return
-%endif
 
         xor     eax,eax
         inc     eax

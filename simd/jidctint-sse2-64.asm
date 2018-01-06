@@ -140,11 +140,7 @@ EXTN(jsimd_idct_islow_sse2):
         packsswb xmm1,xmm1
         movd    eax,xmm1
         test    rax,rax
-%ifdef COMPILING_FOR_NACL
-        jnz     near .columnDCT
-%else
         jnz     short .columnDCT
-%endif
 
         ; -- AC terms all zero
 

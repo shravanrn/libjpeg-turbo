@@ -338,11 +338,7 @@ EXTN(jsimd_h2v2_fancy_upsample_mmx):
         movq    MMWORD [wk(2)], mm1
         movq    MMWORD [wk(3)], mm2
 
-%ifdef COMPILING_FOR_NACL
-        jmp     near .upsample
-%else
         jmp     short .upsample
-%endif
         alignx  16,7
 
 .columnloop:
@@ -560,19 +556,11 @@ EXTN(jsimd_h2v1_upsample_mmx):
         mov     edx, JDIMENSION [output_width(ebp)]
         add     edx, byte (2*SIZEOF_MMWORD)-1
         and     edx, byte -(2*SIZEOF_MMWORD)
-%ifdef COMPILING_FOR_NACL
-        jz      near .return
-%else
         jz      short .return
-%endif
 
         mov     ecx, INT [max_v_samp(ebp)]      ; rowctr
         test    ecx,ecx
-%ifdef COMPILING_FOR_NACL
-        jz      near .return
-%else
         jz      short .return
-%endif
 
         mov     esi, JSAMPARRAY [input_data(ebp)]       ; input_data
         mov     edi, POINTER [output_data_ptr(ebp)]
@@ -673,11 +661,7 @@ EXTN(jsimd_h2v2_upsample_mmx):
 
         mov     ecx, INT [max_v_samp(ebp)]      ; rowctr
         test    ecx,ecx
-%ifdef COMPILING_FOR_NACL
-        jz      near .return
-%else
         jz      short .return
-%endif
 
         mov     esi, JSAMPARRAY [input_data(ebp)]       ; input_data
         mov     edi, POINTER [output_data_ptr(ebp)]
@@ -735,11 +719,7 @@ EXTN(jsimd_h2v2_upsample_mmx):
         add     esi, byte 1*SIZEOF_JSAMPROW     ; input_data
         add     edi, byte 2*SIZEOF_JSAMPROW     ; output_data
         sub     ecx, byte 2                     ; rowctr
-%ifdef COMPILING_FOR_NACL
-        jg      near .rowloop
-%else
         jg      short .rowloop
-%endif
 
         emms            ; empty MMX state
 

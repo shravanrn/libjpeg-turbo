@@ -97,11 +97,7 @@ EXTN(jsimd_rgb_ycc_convert_mmx):
         movpic  eax, POINTER [gotptr]   ; load GOT address (eax)
 
         cmp     ecx, byte SIZEOF_MMWORD
-%ifdef COMPILING_FOR_NACL
-        jae     near .columnloop
-%else
         jae     short .columnloop
-%endif
         alignx  16,7
 
 %if RGB_PIXELSIZE == 3 ; ---------------
