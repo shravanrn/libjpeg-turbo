@@ -13,22 +13,22 @@ BUILDS32=x86
 BUILDS64=x64
 
 # paths to various external resources
-NACL_NASM=/home/cdisselk/CSE227/NASM_NaCl/nasm
-SANDBOXING_NACL_DIR=/home/cdisselk/CSE227/Sandboxing_NaCl
+NACL_NASM=$(shell realpath ../../NASM_NaCl/nasm)
+SANDBOXING_NACL_DIR=$(shell realpath ../../Sandboxing_NaCl)
 NACL_CLANG32=$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/bin/i686-nacl-clang
 NACL_CLANG64=$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/bin/x86_64-nacl-clang
 NACL_CLANG++32=$(NACL_CLANG32)++
 NACL_CLANG++64=$(NACL_CLANG64)++
 NACL_AR32=$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/bin/i686-nacl-ar
 NACL_AR64=$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/bin/x86_64-nacl-ar
-PROCESS_SANDBOX_DIR=/home/cdisselk/CSE227/poc
+PROCESS_SANDBOX_DIR=$(shell realpath ../../poc)
 
 # paths to the appropriate ProcessSandbox_otherside executables
 OTHERSIDE_EXEC32 ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32
 OTHERSIDE_EXEC64 ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg64
 
 # Username you are running the 'run' or 'dbg' targets under, for the purposes of the kill_old_processes target
-USER=cdisselk
+USER= $(USER)
 
 # Core to pin main process (or only process) to, for the 'run' and 'debug' targets
 MAINCORE=0
