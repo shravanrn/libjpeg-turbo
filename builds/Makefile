@@ -21,14 +21,11 @@ NACL_CLANG++32=$(NACL_CLANG32)++
 NACL_CLANG++64=$(NACL_CLANG64)++
 NACL_AR32=$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/bin/i686-nacl-ar
 NACL_AR64=$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/bin/x86_64-nacl-ar
-PROCESS_SANDBOX_DIR=$(shell realpath ../../poc)
+PROCESS_SANDBOX_DIR=$(shell realpath ../../ProcessSandbox)
 
 # paths to the appropriate ProcessSandbox_otherside executables
 OTHERSIDE_EXEC32 ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32
 OTHERSIDE_EXEC64 ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg64
-
-# Username you are running the 'run' or 'dbg' targets under, for the purposes of the kill_old_processes target
-USER= $(USER)
 
 # Core to pin main process (or only process) to, for the 'run' and 'debug' targets
 MAINCORE=0
@@ -62,16 +59,16 @@ define prepare_build =
 endef
 
 define create_libjpeg_nexe_32 =
-	mkdir -p mainCombine
-	cd mainCombine
-	$(NACL_AR32) -x ../.libs/libjpeg.a
+	mkdir -p mainCombine && \
+	cd ./mainCombine && \
+	$(NACL_AR32) -x ../.libs/libjpeg.a && \
 	$(NACL_CLANG++32) -fPIC -m32 -B$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32/lib/ -Wl,-rpath-link,$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32/lib -Wl,-rpath-link,$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/x86_64-nacl/lib32 -Wl,-rpath-link,$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32/lib ./*.o -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32/lib -L$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/x86_64-nacl/lib32 -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-32/lib -ldyn_ldr_sandbox_init -o ./libjpeg.nexe
 endef
 
 define create_libjpeg_nexe_64 =
-	mkdir -p mainCombine
-	cd mainCombine
-	$(NACL_AR64) -x ../.libs/libjpeg.a
+	mkdir -p mainCombine && \
+	cd ./mainCombine && \
+	$(NACL_AR64) -x ../.libs/libjpeg.a && \
 	$(NACL_CLANG++64) -fPIC -m64 -B$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-64/lib/ -Wl,-rpath-link,$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-64/lib -Wl,-rpath-link,$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/x86_64-nacl/lib -Wl,-rpath-link,$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-64/lib ./*.o -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-64/lib -L$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/x86_64-nacl/lib -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-64/lib -ldyn_ldr_sandbox_init -o ./libjpeg.nexe
 endef
 
