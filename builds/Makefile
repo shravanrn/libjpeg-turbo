@@ -80,7 +80,7 @@ NACLFLAGS64= NASM=$(NACL_NASM) AR=$(NACL_AR64) NAFLAGS='-nacl -DCOMPILING_FOR_NA
 $(BUILDS32)/nacl_build :
 	-mkdir $(BUILDS32)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -fPIC -DUSE_NACL' LDFLAGS='$(LDFLAGS32) -fPIC' CC=$(NACL_CLANG32) $(NONSIMDFLAGS) $(NACLFLAGS32) && \
+	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -fPIC' LDFLAGS='$(LDFLAGS32) -fPIC' CC=$(NACL_CLANG32) $(NONSIMDFLAGS) $(NACLFLAGS32) && \
 	make clean && \
 	make && \
 	$(call create_libjpeg_nexe_32)
@@ -88,7 +88,7 @@ $(BUILDS32)/nacl_build :
 $(BUILDS64)/nacl_build :
 	-mkdir $(BUILDS64)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -fPIC -DUSE_NACL' LDFLAGS='$(LDFLAGS64) -fPIC' CC=$(NACL_CLANG64) $(NONSIMDFLAGS) $(NACLFLAGS64) && \
+	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -fPIC' LDFLAGS='$(LDFLAGS64) -fPIC' CC=$(NACL_CLANG64) $(NONSIMDFLAGS) $(NACLFLAGS64) && \
 	make clean && \
 	make && \
 	$(call create_libjpeg_nexe_64)
@@ -96,7 +96,7 @@ $(BUILDS64)/nacl_build :
 $(BUILDS32)/nacl_build_simd :
 	-mkdir $(BUILDS32)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -fPIC -DUSE_NACL' LDFLAGS='$(LDFLAGS32) -fPIC' CC=$(NACL_CLANG32) $(SIMDFLAGS) $(NACLFLAGS32) && \
+	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -fPIC' LDFLAGS='$(LDFLAGS32) -fPIC' CC=$(NACL_CLANG32) $(SIMDFLAGS) $(NACLFLAGS32) && \
 	make clean && \
 	make && \
 	$(call create_libjpeg_nexe_32)
@@ -104,38 +104,10 @@ $(BUILDS32)/nacl_build_simd :
 $(BUILDS64)/nacl_build_simd :
 	-mkdir $(BUILDS64)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -fPIC -DUSE_NACL' LDFLAGS='$(LDFLAGS64) -fPIC' CC=$(NACL_CLANG64) $(SIMDFLAGS) $(NACLFLAGS64) && \
+	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -fPIC' LDFLAGS='$(LDFLAGS64) -fPIC' CC=$(NACL_CLANG64) $(SIMDFLAGS) $(NACLFLAGS64) && \
 	make clean && \
 	make && \
 	$(call create_libjpeg_nexe_64)
-
-$(BUILDS32)/ps_build :
-	-mkdir $(BUILDS32)
-	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS32)' CC=$(CC) $(NONSIMDFLAGS) && \
-	make clean && \
-	make
-
-$(BUILDS64)/ps_build :
-	-mkdir $(BUILDS64)
-	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS64)' CC=$(CC) $(NONSIMDFLAGS) && \
-	make clean && \
-	make
-
-$(BUILDS32)/ps_build_simd :
-	-mkdir $(BUILDS32)
-	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS32)' CC=$(CC) $(SIMDFLAGS) && \
-	make clean && \
-	make
-
-$(BUILDS64)/ps_build_simd :
-	-mkdir $(BUILDS64)
-	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST64) CFLAGS='$(CFLAGS64) -DUSE_PROCESS' LDFLAGS='$(LDFLAGS64)' CC=$(CC) $(SIMDFLAGS) && \
-	make clean && \
-	make
 
 $(BUILDS32)/non_nacl_build :
 	-mkdir $(BUILDS32)
@@ -204,17 +176,17 @@ $(BUILDS32)/example_dynamic_nacl_simd : $(BUILDS32)/example_dynamic_nacl_simd.o
 $(BUILDS64)/example_dynamic_nacl_simd : $(BUILDS64)/example_dynamic_nacl_simd.o
 	$(CXX) $(CFLAGS64) $< -o $@ $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
 
-$(BUILDS32)/example_dynamic_ps.o : ../example_dynamic_nacl.cpp $(BUILDS32)/ps_build
-	$(CXX) -c $(CFLAGS32) -std=gnu++11 -DUSE_PROCESS -I$(BUILDS32)/ps_build -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
+$(BUILDS32)/example_dynamic_ps.o : ../example_dynamic_nacl.cpp $(BUILDS32)/non_nacl_build
+	$(CXX) -c $(CFLAGS32) -std=gnu++11 -DUSE_PROCESS -I$(BUILDS32)/non_nacl_build -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
 
-$(BUILDS64)/example_dynamic_ps.o : ../example_dynamic_nacl.cpp $(BUILDS64)/ps_build
-	$(CXX) -c $(CFLAGS64) -std=gnu++11 -DUSE_PROCESS -I$(BUILDS64)/ps_build -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
+$(BUILDS64)/example_dynamic_ps.o : ../example_dynamic_nacl.cpp $(BUILDS64)/non_nacl_build
+	$(CXX) -c $(CFLAGS64) -std=gnu++11 -DUSE_PROCESS -I$(BUILDS64)/non_nacl_build -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
 
-$(BUILDS32)/example_dynamic_ps_simd.o : ../example_dynamic_nacl.cpp $(BUILDS32)/ps_build_simd
-	$(CXX) -c $(CFLAGS32) -std=gnu++11 -DUSE_PROCESS -I$(BUILDS32)/ps_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
+$(BUILDS32)/example_dynamic_ps_simd.o : ../example_dynamic_nacl.cpp $(BUILDS32)/non_nacl_build_simd
+	$(CXX) -c $(CFLAGS32) -std=gnu++11 -DUSE_PROCESS -I$(BUILDS32)/non_nacl_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
 
-$(BUILDS64)/example_dynamic_ps_simd.o : ../example_dynamic_nacl.cpp $(BUILDS64)/ps_build_simd
-	$(CXX) -c $(CFLAGS64) -std=gnu++11 -DUSE_PROCESS -I$(BUILDS64)/ps_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
+$(BUILDS64)/example_dynamic_ps_simd.o : ../example_dynamic_nacl.cpp $(BUILDS64)/non_nacl_build_simd
+	$(CXX) -c $(CFLAGS64) -std=gnu++11 -DUSE_PROCESS -I$(BUILDS64)/non_nacl_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
 
 $(BUILDS32)/example_dynamic_ps : $(BUILDS32)/example_dynamic_ps.o $(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg32.a
 	$(CXX) $(CFLAGS32) $^ -o $@ -lrt -lpthread
@@ -262,23 +234,23 @@ $(BUILDS64)/run_dynamic_nacl_simd : $(BUILDS64)/example_dynamic_nacl_simd
 
 $(BUILDS32)/run_dynamic_ps : $(BUILDS32)/example_dynamic_ps $(OTHERSIDE_EXEC32) kill_old_processes
 	echo && echo dynamic_ps 32-bit: && echo && \
-	LD_LIBRARY_PATH=$(BUILDS32)/ps_build/.libs:$(LD_LIBRARY_PATH) \
-	$(GDB) ./$(BUILDS32)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC32) $(MAINCORE) $(SANDBOXCORE)
+	LD_LIBRARY_PATH=$(BUILDS32)/non_nacl_build/.libs:$(LD_LIBRARY_PATH) \
+	$(GDB) ./$(BUILDS32)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build/.libs/libjpeg.so $(OTHERSIDE_EXEC32) $(MAINCORE) $(SANDBOXCORE)
 
 $(BUILDS64)/run_dynamic_ps : $(BUILDS64)/example_dynamic_ps $(OTHERSIDE_EXEC64) kill_old_processes
 	echo && echo dynamic_ps 64-bit: && echo && \
-	LD_LIBRARY_PATH=$(BUILDS64)/ps_build/.libs:$(LD_LIBRARY_PATH) \
-	$(GDB) ./$(BUILDS64)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/ps_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
+	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build/.libs:$(LD_LIBRARY_PATH) \
+	$(GDB) ./$(BUILDS64)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
 
 $(BUILDS32)/run_dynamic_ps_simd : $(BUILDS32)/example_dynamic_ps_simd $(OTHERSIDE_EXEC32) kill_old_processes
 	echo && echo dynamic_ps_simd 32-bit: && echo && \
-	LD_LIBRARY_PATH=$(BUILDS32)/ps_build_simd/.libs:$(LD_LIBRARY_PATH) \
-	$(GDB) ./$(BUILDS32)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/ps_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC32) $(MAINCORE) $(SANDBOXCORE)
+	LD_LIBRARY_PATH=$(BUILDS32)/non_nacl_build_simd/.libs:$(LD_LIBRARY_PATH) \
+	$(GDB) ./$(BUILDS32)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC32) $(MAINCORE) $(SANDBOXCORE)
 
 $(BUILDS64)/run_dynamic_ps_simd : $(BUILDS64)/example_dynamic_ps_simd $(OTHERSIDE_EXEC64) kill_old_processes
 	echo && echo dynamic_ps_simd 64-bit: && echo && \
-	LD_LIBRARY_PATH=$(BUILDS64)/ps_build_simd/.libs:$(LD_LIBRARY_PATH) \
-	$(GDB) ./$(BUILDS64)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/ps_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
+	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build_simd/.libs:$(LD_LIBRARY_PATH) \
+	$(GDB) ./$(BUILDS64)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
 
 $(BUILDS32)/dbg_dynamic_non_nacl : debug $(BUILDS32)/run_dynamic_non_nacl
 $(BUILDS32)/dbg_dynamic_non_nacl_simd : debug $(BUILDS32)/run_dynamic_non_nacl_simd
