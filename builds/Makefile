@@ -33,8 +33,8 @@ MAINCORE=0
 SANDBOXCORE=2
 
 PRODUCTS_BASENAMES=example_dynamic_non_nacl example_dynamic_nacl example_dynamic_ps
-PRODUCTS32=$(addprefix $(BUILDS32)/,$(PRODUCTS_BASENAMES))
-PRODUCTS64=$(addprefix $(BUILDS64)/,$(PRODUCTS_BASENAMES))
+PRODUCTS32=$(addprefix $(BUILDS32)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS32)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES)))
+PRODUCTS64=$(addprefix $(BUILDS64)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES)))
 PRODUCTS=$(PRODUCTS32) $(PRODUCTS64)
 
 RUN_BASENAMES=run_dynamic_non_nacl run_dynamic_nacl run_dynamic_ps
