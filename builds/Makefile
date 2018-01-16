@@ -80,7 +80,7 @@ NACLFLAGS64= NASM=$(NACL_NASM) AR=$(NACL_AR64) NAFLAGS='-nacl -DCOMPILING_FOR_NA
 $(BUILDS32)/nacl_build :
 	mkdir -p $(BUILDS32)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -fPIC' LDFLAGS='$(LDFLAGS32) -fPIC' CC=$(NACL_CLANG32) $(NONSIMDFLAGS) $(NACLFLAGS32) && \
+	sh ../../../configure --host $(HOST32) --disable-shared CFLAGS='$(CFLAGS32) -fPIC' LDFLAGS='$(LDFLAGS32) -fPIC' CC=$(NACL_CLANG32) $(NONSIMDFLAGS) $(NACLFLAGS32) && \
 	make clean && \
 	make && \
 	$(call create_libjpeg_nexe_32)
@@ -96,7 +96,7 @@ $(BUILDS64)/nacl_build :
 $(BUILDS32)/nacl_build_simd :
 	mkdir -p $(BUILDS32)
 	$(call prepare_build,$@) && \
-	sh ../../../configure --host $(HOST32) CFLAGS='$(CFLAGS32) -fPIC' LDFLAGS='$(LDFLAGS32) -fPIC' CC=$(NACL_CLANG32) $(SIMDFLAGS) $(NACLFLAGS32) && \
+	sh ../../../configure --host $(HOST32) --disable-shared CFLAGS='$(CFLAGS32) -fPIC' LDFLAGS='$(LDFLAGS32) -fPIC' CC=$(NACL_CLANG32) $(SIMDFLAGS) $(NACLFLAGS32) && \
 	make clean && \
 	make && \
 	$(call create_libjpeg_nexe_32)
