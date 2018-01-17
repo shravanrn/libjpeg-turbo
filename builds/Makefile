@@ -32,6 +32,9 @@ MAINCORE=0
 # Core to pin sandbox process to, for the 'run_dynamic_ps' and 'debug_dynamic_ps' targets
 SANDBOXCORE=2
 
+BUILDS_BASENAMES=non_nacl_build nacl_build
+ALLBUILDS32=$(addprefix $(BUILDS32)/,$(BUILDS_BASENAMES)) $(addprefix $(BUILDS32)/,$(addsuffix _simd,$(BUILDS_BASENAMES)))
+ALLBUILDS64=$(addprefix $(BUILDS64)/,$(BUILDS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd,$(BUILDS_BASENAMES)))
 PRODUCTS_BASENAMES=example_dynamic_non_nacl example_dynamic_nacl example_dynamic_ps
 PRODUCTS32=$(addprefix $(BUILDS32)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS32)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES)))
 PRODUCTS64=$(addprefix $(BUILDS64)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES)))
@@ -46,6 +49,8 @@ RUN64=$(addprefix $(BUILDS64)/,$(RUN_BASENAMES))
 all : $(PRODUCTS)
 all32 : $(PRODUCTS32)
 all64 : $(PRODUCTS64)
+build32 : $(ALLBUILDS32)
+build64 : $(ALLBUILDS64)
 
 run_all32 : $(RUN32)
 run_all64 : $(RUN64)
