@@ -734,7 +734,7 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
   unsigned slotNumber = 0;
   uintptr_t callback = registerSandboxCallback(sandbox, slotNumber, (uintptr_t) my_error_exit_stub);
 #else
-  void* callback = sandbox->registerCallback((void*) my_error_exit);
+  void* callback = sandbox->registerCallback(0, (void*) my_error_exit);
 #endif
 
   if(!callback)
