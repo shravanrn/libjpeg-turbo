@@ -1,6 +1,6 @@
 CC=clang
 CXX=clang++
-override CFLAGS += -O3
+override CFLAGS += -O3 -fPIC
 CFLAGS32=$(CFLAGS) -m32
 CFLAGS64=$(CFLAGS) -m64
 LDFLAGS32=$(LDFLAGS) -m32
