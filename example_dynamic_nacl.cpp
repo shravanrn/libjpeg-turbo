@@ -118,7 +118,7 @@
 #ifdef USE_NACL
 NaClSandbox* sandbox;
 #elif defined(USE_PROCESS)
-ProcessSandbox* sandbox;
+JPEGProcessSandbox* sandbox;
 #else
 #error No sandbox type defined.
 #endif
@@ -452,10 +452,10 @@ void put_scanline_someplace(JSAMPROW rowBuffer, int row_stride)
 }
 
 #ifdef USE_PROCESS
-static void* mallocInSandbox(ProcessSandbox* sandbox, size_t size) {
+static void* mallocInSandbox(JPEGProcessSandbox* sandbox, size_t size) {
   return sandbox->mallocInSandbox(size);
 }
-static void freeInSandbox(ProcessSandbox* sandbox, void* ptr) {
+static void freeInSandbox(JPEGProcessSandbox* sandbox, void* ptr) {
   sandbox->freeInSandbox(ptr);
 }
 #define SANDBOX_CALLBACK
@@ -734,7 +734,7 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
   unsigned slotNumber = 0;
   uintptr_t callback = registerSandboxCallback(sandbox, slotNumber, (uintptr_t) my_error_exit_stub);
 #else
-  void* callback = sandbox->registerCallback(0, (void*) my_error_exit);
+  CB_TYPE_0 callback = sandbox->registerCallback<CB_TYPE_0>(my_error_exit, nullptr);
 #endif
 
   if(!callback)
@@ -913,7 +913,7 @@ int dynamicLoad(char* path, char* libraryPath, char* maincore_as_str, char* sbco
     printf("Bad sandboxcore argument\n");
     return 0;
   }
-  sandbox = new ProcessSandbox(libraryPath, maincore, sbcore);
+  sandbox = new JPEGProcessSandbox(libraryPath, maincore, sbcore);
 #else
 #error No sandbox type defined.
 #endif
