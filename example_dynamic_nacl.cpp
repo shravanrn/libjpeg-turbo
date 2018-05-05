@@ -428,7 +428,7 @@ JSAMPARRAY d_alloc_sarray(void* alloc_sarray, j_common_ptr cinfo, int pool_id, J
   invokeFunctionCall(threadData, alloc_sarray);
   return (JSAMPARRAY)functionCallReturnPtr(threadData);
 #elif defined(USE_PROCESS)
-  return sandbox->inv_alloc_sarray(alloc_sarray, cinfo, pool_id, samplesperrow, numrows);
+  return sandbox->inv_alloc_sarray_ps(cinfo, pool_id, samplesperrow, numrows);
 #else
 #error No sandbox type defined.
 #endif
@@ -734,7 +734,7 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
   unsigned slotNumber = 0;
   uintptr_t callback = registerSandboxCallback(sandbox, slotNumber, (uintptr_t) my_error_exit_stub);
 #else
-  CB_TYPE_0 callback = sandbox->registerCallback<CB_TYPE_0>(my_error_exit, nullptr);
+  auto callback = sandbox->registerCallback<JPEG::CB_TYPE_0>(my_error_exit, nullptr);
 #endif
 
   if(!callback)

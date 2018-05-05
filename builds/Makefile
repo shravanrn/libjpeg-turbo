@@ -193,16 +193,16 @@ $(BUILDS32)/example_dynamic_ps_simd.o : ../example_dynamic_nacl.cpp $(BUILDS32)/
 $(BUILDS64)/example_dynamic_ps_simd.o : ../example_dynamic_nacl.cpp $(BUILDS64)/non_nacl_build_simd
 	$(CXX) -c $(CFLAGS64) -std=gnu++11 -DUSE_PROCESS -I.. -I$(BUILDS64)/non_nacl_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
 
-$(BUILDS32)/example_dynamic_ps : $(BUILDS32)/example_dynamic_ps.o $(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg32.a
+$(BUILDS32)/example_dynamic_ps : $(BUILDS32)/example_dynamic_ps.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg32.a
 	$(CXX) $(CFLAGS32) $^ -o $@ -lrt -lpthread
 
-$(BUILDS64)/example_dynamic_ps : $(BUILDS64)/example_dynamic_ps.o $(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg64.a
+$(BUILDS64)/example_dynamic_ps : $(BUILDS64)/example_dynamic_ps.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a
 	$(CXX) $(CFLAGS64) $^ -o $@ -lrt -lpthread
 
-$(BUILDS32)/example_dynamic_ps_simd : $(BUILDS32)/example_dynamic_ps_simd.o $(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg32.a
+$(BUILDS32)/example_dynamic_ps_simd : $(BUILDS32)/example_dynamic_ps_simd.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg32.a
 	$(CXX) $(CFLAGS32) $^ -o $@ -lrt -lpthread
 
-$(BUILDS64)/example_dynamic_ps_simd : $(BUILDS64)/example_dynamic_ps_simd.o $(PROCESS_SANDBOX_DIR)/ProcessSandbox_jpeg64.a
+$(BUILDS64)/example_dynamic_ps_simd : $(BUILDS64)/example_dynamic_ps_simd.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a
 	$(CXX) $(CFLAGS64) $^ -o $@ -lrt -lpthread
 
 $(BUILDS32)/run_dynamic_non_nacl : $(BUILDS32)/example_dynamic_non_nacl
