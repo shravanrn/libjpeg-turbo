@@ -415,7 +415,11 @@ read_JPEG_file (unverified_data<unsigned char *> fileBuff, unsigned long fsize)
   /* We set up the normal JPEG error routines, then override error_exit. */
   p_cinfo->err = sandbox_invoke(sandbox, jpeg_std_error, &(p_jerr->pub));
 
-  std::unique_ptr<sandbox_callback_helper<void(unverified_data<j_common_ptr>)>> callback(sandbox_callback(sandbox, my_error_exit));
+  #ifdef USE_NACL
+    std::unique_ptr<sandbox_callback_helper<void(unverified_data<j_common_ptr>)>> callback(sandbox_callback(sandbox, my_error_exit));
+  #else
+    std::unique_ptr<sandbox_callback_helper<JPEGProcessSandbox, void(unverified_data<j_common_ptr>)>> callback(sandbox_callback(sandbox, my_error_exit));
+  #endif
 
   p_jerr->pub.error_exit = callback.get();
 
