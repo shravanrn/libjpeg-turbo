@@ -26,21 +26,23 @@ PROCESS_SANDBOX_DIR=$(shell realpath ../../ProcessSandbox)
 # paths to the appropriate ProcessSandbox_otherside executables
 OTHERSIDE_EXEC32 ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32
 OTHERSIDE_EXEC64 ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg64
+OTHERSIDE_EXEC32_SIMD ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32_simd
+OTHERSIDE_EXEC64_SIMD ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg64_simd
 
 # Core to pin main process (or only process) to, for the 'run' and 'debug' targets
-MAINCORE=0
+MAINCORE=3
 # Core to pin sandbox process to, for the 'run_dynamic_ps' and 'debug_dynamic_ps' targets
-SANDBOXCORE=2
+SANDBOXCORE=3
 
 BUILDS_BASENAMES=non_nacl_build nacl_build
 ALLBUILDS32=$(addprefix $(BUILDS32)/,$(BUILDS_BASENAMES)) $(addprefix $(BUILDS32)/,$(addsuffix _simd,$(BUILDS_BASENAMES)))
 ALLBUILDS64=$(addprefix $(BUILDS64)/,$(BUILDS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd,$(BUILDS_BASENAMES)))
 PRODUCTS_BASENAMES=example_dynamic_non_nacl example_dynamic_nacl example_dynamic_ps
 PRODUCTS32=$(addprefix $(BUILDS32)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS32)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES)))
-PRODUCTS64=$(addprefix $(BUILDS64)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES))) $(addprefix $(BUILDS64)/,$(addsuffix _simd_safe_api, $(PRODUCTS_BASENAMES)))
+PRODUCTS64=$(addprefix $(BUILDS64)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES))) $(addprefix $(BUILDS64)/,$(addsuffix _safe_api, $(PRODUCTS_BASENAMES))) $(addprefix $(BUILDS64)/,$(addsuffix _simd_safe_api, $(PRODUCTS_BASENAMES)))
 PRODUCTS=$(PRODUCTS32) $(PRODUCTS64)
 
-RUN_BASENAMES=run_dynamic_non_nacl run_dynamic_nacl run_dynamic_ps
+RUN_BASENAMES=run_dynamic_non_nacl run_dynamic_non_nacl_simd run_dynamic_nacl run_dynamic_nacl_simd run_dynamic_nacl_safe_api run_dynamic_nacl_simd_safe_api run_dynamic_ps run_dynamic_ps_simd run_dynamic_ps_safe_api run_dynamic_ps_simd_safe_api
 RUN32=$(addprefix $(BUILDS32)/,$(RUN_BASENAMES))
 RUN64=$(addprefix $(BUILDS64)/,$(RUN_BASENAMES))
 
@@ -154,6 +156,12 @@ $(BUILDS32)/example_dynamic_non_nacl_simd : ../example_dynamic_non_nacl.cpp $(BU
 $(BUILDS64)/example_dynamic_non_nacl_simd : ../example_dynamic_non_nacl.cpp $(BUILDS64)/non_nacl_build_simd
 	$(CXX) $(CFLAGS64) -std=c++11 -I$(BUILDS64)/non_nacl_build_simd $< -o $@ -ldl
 
+$(BUILDS32)/example_dynamic_non_nacl_safe_api:
+$(BUILDS64)/example_dynamic_non_nacl_safe_api:
+$(BUILDS32)/example_dynamic_non_nacl_simd_safe_api:
+$(BUILDS64)/example_dynamic_non_nacl_simd_safe_api:
+
+
 $(BUILDS32)/example_dynamic_nacl.o : ../example_dynamic_nacl.cpp $(BUILDS32)/nacl_build
 	$(CXX) -c $(CFLAGS32) -std=c++11 -fPIC -DUSE_NACL -I$(BUILDS32)/nacl_build -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@
 
@@ -165,6 +173,9 @@ $(BUILDS32)/example_dynamic_nacl_simd.o : ../example_dynamic_nacl.cpp $(BUILDS32
 
 $(BUILDS64)/example_dynamic_nacl_simd.o : ../example_dynamic_nacl.cpp $(BUILDS64)/nacl_build_simd
 	$(CXX) -c $(CFLAGS64) -std=c++11 -fPIC -DUSE_NACL -I$(BUILDS64)/nacl_build_simd -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@
+
+$(BUILDS64)/example_dynamic_nacl_safe_api.o : ../example_dynamic_safe_api.cpp $(BUILDS64)/nacl_build
+	$(CXX) -c $(CFLAGS64) -std=c++11 -fPIC -DUSE_NACL -I$(BUILDS64)/nacl_build -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@
 
 $(BUILDS64)/example_dynamic_nacl_simd_safe_api.o : ../example_dynamic_safe_api.cpp $(BUILDS64)/nacl_build_simd
 	$(CXX) -c $(CFLAGS64) -std=c++11 -fPIC -DUSE_NACL -I$(BUILDS64)/nacl_build_simd -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@
@@ -184,6 +195,9 @@ $(BUILDS32)/example_dynamic_nacl_simd : $(BUILDS32)/example_dynamic_nacl_simd.o
 $(BUILDS64)/example_dynamic_nacl_simd : $(BUILDS64)/example_dynamic_nacl_simd.o
 	$(CXX) $(CFLAGS64) $< -o $@ $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
 
+$(BUILDS64)/example_dynamic_nacl_safe_api : $(BUILDS64)/example_dynamic_nacl_safe_api.o
+	$(CXX) $(CFLAGS64) $< -o $@ $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
+
 $(BUILDS64)/example_dynamic_nacl_simd_safe_api : $(BUILDS64)/example_dynamic_nacl_simd_safe_api.o
 	$(CXX) $(CFLAGS64) $< -o $@ $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
 
@@ -195,6 +209,9 @@ $(BUILDS64)/example_dynamic_ps.o : ../example_dynamic_nacl.cpp $(BUILDS64)/non_n
 
 $(BUILDS32)/example_dynamic_ps_simd.o : ../example_dynamic_nacl.cpp $(BUILDS32)/non_nacl_build_simd
 	$(CXX) -c $(CFLAGS32) -std=c++11 -DUSE_PROCESS -I.. -I$(BUILDS32)/non_nacl_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
+
+$(BUILDS64)/example_dynamic_ps_safe_api.o : ../example_dynamic_safe_api.cpp $(BUILDS64)/non_nacl_build
+	$(CXX) -c $(CFLAGS64) -std=c++11 -DUSE_PROCESS -I.. -I$(BUILDS64)/non_nacl_build -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
 
 $(BUILDS64)/example_dynamic_ps_simd_safe_api.o : ../example_dynamic_safe_api.cpp $(BUILDS64)/non_nacl_build_simd
 	$(CXX) -c $(CFLAGS64) -std=c++11 -DUSE_PROCESS -I.. -I$(BUILDS64)/non_nacl_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
@@ -212,6 +229,9 @@ $(BUILDS32)/example_dynamic_ps_simd : $(BUILDS32)/example_dynamic_ps_simd.o $(PR
 	$(CXX) $(CFLAGS32) $^ -o $@ -lrt -lpthread
 
 $(BUILDS64)/example_dynamic_ps_simd : $(BUILDS64)/example_dynamic_ps_simd.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a
+	$(CXX) $(CFLAGS64) $^ -o $@ -lrt -lpthread
+
+$(BUILDS64)/example_dynamic_ps_safe_api : $(BUILDS64)/example_dynamic_ps_safe_api.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a
 	$(CXX) $(CFLAGS64) $^ -o $@ -lrt -lpthread
 
 $(BUILDS64)/example_dynamic_ps_simd_safe_api : $(BUILDS64)/example_dynamic_ps_simd_safe_api.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a
@@ -249,34 +269,43 @@ $(BUILDS64)/run_dynamic_nacl_simd : $(BUILDS64)/example_dynamic_nacl_simd
 	echo && echo dynamic_nacl_simd 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_nacl_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe
 
+$(BUILDS64)/run_dynamic_nacl_safe_api : $(BUILDS64)/example_dynamic_nacl_safe_api
+	echo && echo dynamic_nacl_safe_api 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_nacl_safe_api ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/nacl_build/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe
+
 $(BUILDS64)/run_dynamic_nacl_simd_safe_api : $(BUILDS64)/example_dynamic_nacl_simd_safe_api
 	echo && echo dynamic_nacl_simd_safe_api 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_nacl_simd_safe_api ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe
 
-$(BUILDS32)/run_dynamic_ps : $(BUILDS32)/example_dynamic_ps $(OTHERSIDE_EXEC32) kill_old_processes
+$(BUILDS32)/run_dynamic_ps : $(BUILDS32)/example_dynamic_ps $(OTHERSIDE_EXEC32)
 	echo && echo dynamic_ps 32-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS32)/non_nacl_build/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS32)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build/.libs/libjpeg.so $(OTHERSIDE_EXEC32) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS64)/run_dynamic_ps : $(BUILDS64)/example_dynamic_ps $(OTHERSIDE_EXEC64) kill_old_processes
+$(BUILDS64)/run_dynamic_ps : $(BUILDS64)/example_dynamic_ps $(OTHERSIDE_EXEC64)
 	echo && echo dynamic_ps 64-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS64)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS32)/run_dynamic_ps_simd : $(BUILDS32)/example_dynamic_ps_simd $(OTHERSIDE_EXEC32) kill_old_processes
+$(BUILDS32)/run_dynamic_ps_simd : $(BUILDS32)/example_dynamic_ps_simd $(OTHERSIDE_EXEC32_SIMD)
 	echo && echo dynamic_ps_simd 32-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS32)/non_nacl_build_simd/.libs:$(LD_LIBRARY_PATH) \
-	$(GDB) ./$(BUILDS32)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC32) $(MAINCORE) $(SANDBOXCORE)
+	$(GDB) ./$(BUILDS32)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC32_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS64)/run_dynamic_ps_simd : $(BUILDS64)/example_dynamic_ps_simd $(OTHERSIDE_EXEC64) kill_old_processes
+$(BUILDS64)/run_dynamic_ps_simd : $(BUILDS64)/example_dynamic_ps_simd $(OTHERSIDE_EXEC64_SIMD)
 	echo && echo dynamic_ps_simd 64-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build_simd/.libs:$(LD_LIBRARY_PATH) \
-	$(GDB) ./$(BUILDS64)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
+	$(GDB) ./$(BUILDS64)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS64)/run_dynamic_ps_simd_safe_api : $(BUILDS64)/example_dynamic_ps_simd_safe_api $(OTHERSIDE_EXEC64) kill_old_processes
+$(BUILDS64)/run_dynamic_ps_safe_api : $(BUILDS64)/example_dynamic_ps_safe_api $(OTHERSIDE_EXEC64)
+	echo && echo dynamic_ps_safe_api 64-bit: && echo && \
+	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build/.libs:$(LD_LIBRARY_PATH) \
+	$(GDB) ./$(BUILDS64)/example_dynamic_ps_safe_api ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
+
+$(BUILDS64)/run_dynamic_ps_simd_safe_api : $(BUILDS64)/example_dynamic_ps_simd_safe_api $(OTHERSIDE_EXEC64_SIMD)
 	echo && echo dynamic_ps_simd_safe_api 64-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build_simd/.libs:$(LD_LIBRARY_PATH) \
-	$(GDB) ./$(BUILDS64)/example_dynamic_ps_simd_safe_api ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
+	$(GDB) ./$(BUILDS64)/example_dynamic_ps_simd_safe_api ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
 $(BUILDS32)/dbg_dynamic_non_nacl : debug $(BUILDS32)/run_dynamic_non_nacl
 $(BUILDS32)/dbg_dynamic_non_nacl_simd : debug $(BUILDS32)/run_dynamic_non_nacl_simd

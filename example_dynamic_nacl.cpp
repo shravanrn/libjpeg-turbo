@@ -1114,6 +1114,10 @@ int main(int argc, char** argv)
   #endif
 
   printf("Success\n");
+  
+  #if defined(USE_PROCESS)
+  sandbox->destroySandbox();
+  #endif
   fflush(stdout);
   return 0;
 }
