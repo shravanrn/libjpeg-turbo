@@ -52,7 +52,7 @@ all : $(PRODUCTS)
 all32 : $(PRODUCTS32)
 all64 : $(PRODUCTS64)
 build32 : $(ALLBUILDS32)
-build64 : $(ALLBUILDS64)
+build64 : $(ALLBUILDS64) $(BUILDS64)/scaling_benchmark_nacl $(BUILDS64)/scaling_benchmark_ps
 
 run_all32 : $(RUN32)
 run_all64 : $(RUN64)
@@ -201,6 +201,10 @@ $(BUILDS64)/example_dynamic_nacl_safe_api : $(BUILDS64)/example_dynamic_nacl_saf
 $(BUILDS64)/example_dynamic_nacl_simd_safe_api : $(BUILDS64)/example_dynamic_nacl_simd_safe_api.o
 	$(CXX) $(CFLAGS64) $< -o $@ $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
 
+$(BUILDS64)/scaling_benchmark_nacl : ../scaling_benchmark.cpp
+	$(CXX) -c $(CFLAGS64) -std=c++11 -fPIC -DUSE_NACL -I$(BUILDS64)/nacl_build_simd -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@.o
+	$(CXX) $(CFLAGS64) $@.o -o $@ $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
+
 $(BUILDS32)/example_dynamic_ps.o : ../example_dynamic_nacl.cpp $(BUILDS32)/non_nacl_build
 	$(CXX) -c $(CFLAGS32) -std=c++11 -DUSE_PROCESS -I.. -I$(BUILDS32)/non_nacl_build -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@
 
@@ -236,6 +240,10 @@ $(BUILDS64)/example_dynamic_ps_safe_api : $(BUILDS64)/example_dynamic_ps_safe_ap
 
 $(BUILDS64)/example_dynamic_ps_simd_safe_api : $(BUILDS64)/example_dynamic_ps_simd_safe_api.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a
 	$(CXX) $(CFLAGS64) $^ -o $@ -lrt -lpthread
+
+$(BUILDS64)/scaling_benchmark_ps : ../scaling_benchmark.cpp
+	$(CXX) -c $(CFLAGS64) -std=c++11 -DUSE_PROCESS -I.. -I$(BUILDS64)/non_nacl_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@.o
+	$(CXX) $(CFLAGS64) $@.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a -o $@ -lrt -lpthread
 
 $(BUILDS32)/run_dynamic_non_nacl : $(BUILDS32)/example_dynamic_non_nacl
 	echo && echo dynamic_non_nacl 32-bit: && echo && \
@@ -306,6 +314,14 @@ $(BUILDS64)/run_dynamic_ps_simd_safe_api : $(BUILDS64)/example_dynamic_ps_simd_s
 	echo && echo dynamic_ps_simd_safe_api 64-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build_simd/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS64)/example_dynamic_ps_simd_safe_api ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
+
+$(BUILDS64)/run_scaling_benchmark_nacl:
+	echo && echo run_scaling_benchmark_nacl 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_nacl ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe
+
+$(BUILDS64)/run_scaling_benchmark_ps:
+	echo && echo dynamic_nacl_simd_safe_api 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_ps $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
 $(BUILDS32)/dbg_dynamic_non_nacl : debug $(BUILDS32)/run_dynamic_non_nacl
 $(BUILDS32)/dbg_dynamic_non_nacl_simd : debug $(BUILDS32)/run_dynamic_non_nacl_simd

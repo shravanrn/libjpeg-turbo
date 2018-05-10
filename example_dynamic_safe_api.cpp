@@ -366,18 +366,6 @@ my_error_exit (unverified_data<j_common_ptr> cinfo)
   longjmp(setjmp_buffer, 1);
 }
 
-#ifdef USE_NACL
-SANDBOX_CALLBACK void my_error_exit_stub(uintptr_t sandboxPtr)
-{
-  NaClSandbox* sandboxC = (NaClSandbox*) sandboxPtr;
-  NaClSandbox_Thread* threadData = callbackParamsBegin(sandbox);
-  j_common_ptr cinfo = COMPLETELY_UNTRUSTED_CALLBACK_PTR_PARAM(threadData, j_common_ptr);
-
-  //We should not assume anything about - need to have some sort of validation here
-  my_error_exit(cinfo);
-}
-#endif
-
 /*
  * Sample routine for JPEG decompression.  We assume that the source file name
  * is passed in.  We want to return 1 on success, 0 on error.
