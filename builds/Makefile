@@ -7,6 +7,9 @@ LDFLAGS32=$(LDFLAGS) -m32
 LDFLAGS64=$(LDFLAGS) -m64
 HOST32=i686-pc-linux-gnu
 HOST64=x86_64-linux-gnu
+EMSCRIPTENHOST=wasm32-unknown-none
+EMSCRIPTENCFLAGS=$(CFLAGS)
+EMSCRIPTENLDFLAGS=$(LDFLAGS)
 
 # Folder names to store 32-bit and 64-bit builds respectively
 BUILDS32=x86
@@ -22,6 +25,11 @@ NACL_CLANG++64=$(NACL_CLANG64)++
 NACL_AR32=$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/bin/i686-nacl-ar
 NACL_AR64=$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/bin/x86_64-nacl-ar
 PROCESS_SANDBOX_DIR=$(shell realpath ../../ProcessSandbox)
+EMCC_DIR=$(shell realpath ../../emsdk)
+EMCC=emcc
+EMCC_LD=emcc
+EMAR=emar
+WASM_SANDBOX_DIR=$(shell realpath ../../wasm-sandboxing)
 
 # paths to the appropriate ProcessSandbox_otherside executables
 OTHERSIDE_EXEC32 ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32
@@ -77,6 +85,21 @@ define create_libjpeg_nexe_64 =
 	cd ./mainCombine && \
 	$(NACL_AR64) -x ../.libs/libjpeg.a && \
 	$(NACL_CLANG++64) -fPIC -m64 -B$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-64/lib/ -Wl,-rpath-link,$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-64/lib -Wl,-rpath-link,$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/x86_64-nacl/lib -Wl,-rpath-link,$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-64/lib ./*.o -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-64/lib -L$(SANDBOXING_NACL_DIR)/native_client/toolchain/linux_x86/pnacl_newlib/x86_64-nacl/lib -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl-x86-64/lib -ldyn_ldr_sandbox_init -o ./libjpeg.nexe
+endef
+
+define load_emsdk_path = 
+	source $(EMCC_DIR)/emsdk_env.sh && 	export EMCC_EXPERIMENTAL_USE_LLD=0
+endef
+
+# 1 - .a input lib file
+# 2 - .js output file
+define convert_to_wasm =
+	$(EMCC) $(1) -O0 -s WASM=1 -s TOTAL_MEMORY=2147418112 -s ALLOW_MEMORY_GROWTH=0 -s LEGALIZE_JS_FFI=0 -s EMULATED_FUNCTION_POINTERS=1 -s "EXPORTED_FUNCTIONS=[$$($(WASM_SANDBOX_DIR)/builds/getLLVMFileFunctions $(1)), '_malloc', '_free']" -o $(2) && \
+	$(WASM_SANDBOX_DIR)/bin/wasm2wat --inline-exports --inline-imports -f $(patsubst %.js,%.wasm,$(2)) -o $(patsubst %.js,%.wat,$(2)) && \
+	$(WASM_SANDBOX_DIR)/bin/wasm2c $(patsubst %.js,%.wasm,$(2)) -o $(patsubst %.js,%.c,$(2)) && \
+	$(WASM_SANDBOX_DIR)/builds/generateModuleSpecificConstants $(2) > $(patsubst %.js,%_rt.cpp,$(2)) && \
+	$(CC) $(CFLAGS) -I $(WASM_SANDBOX_DIR)/wasm2c -c $(patsubst %.js,%.c,$(2)) -o $(patsubst %.js,%.o,$(2)) && \
+	$(CXX) $(CFLAGS) -std=c++11 $(WASM_SANDBOX_DIR)/wasm2c/wasm-rt-impl.cpp $(WASM_SANDBOX_DIR)/wasm2c/wasm-rt-syscall-impl.cpp $(patsubst %.js,%_rt.cpp,$(2)) $(patsubst %.js,%.o,$(2)) -I $(WASM_SANDBOX_DIR)/wasm2c -fPIC -shared -o $(patsubst %.js,%_wasm.so,$(2))
 endef
 
 SIMDFLAGS=
@@ -143,6 +166,16 @@ $(BUILDS64)/non_nacl_build_simd :
 	sh ../../../configure -host $(HOST64) CFLAGS='$(CFLAGS64)' LDFLAGS='$(LDFLAGS64)' CC=$(CC) $(SIMDFLAGS) NASM=$(NACL_NASM) && \
 	make clean && \
 	make
+
+SHELL := /bin/bash
+$(BUILDS64)/wasm_build :
+	mkdir -p $(BUILDS64)
+	$(call prepare_build,$@) && \
+	$(call load_emsdk_path) && \
+	../../../configure -host $(EMSCRIPTENHOST) --disable-shared CFLAGS='$(EMSCRIPTENCFLAGS)' LDFLAGS='$(EMSCRIPTENLDFLAGS)' CC=$(EMCC) LD=$(EMCC) AR=$(EMAR) $(NONSIMDFLAGS) NASM=$(NACL_NASM) && \
+	make clean && \
+	make && \
+	$(call convert_to_wasm,$(shell realpath $@)/.libs/libjpeg.a,$(shell realpath $@)/.libs/libjpeg.js)
 
 $(BUILDS32)/example_dynamic_non_nacl : ../example_dynamic_non_nacl.cpp $(BUILDS32)/non_nacl_build
 	$(CXX) $(CFLAGS32) -std=c++11 -I$(BUILDS32)/non_nacl_build $< -o $@ -ldl
@@ -244,6 +277,12 @@ $(BUILDS64)/example_dynamic_ps_safe_api : $(BUILDS64)/example_dynamic_ps_safe_ap
 $(BUILDS64)/example_dynamic_ps_simd_safe_api : $(BUILDS64)/example_dynamic_ps_simd_safe_api.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a
 	$(CXX) $(CFLAGS64) $^ -o $@ -lrt -lpthread
 
+$(BUILDS64)/example_dynamic_wasm.o : ../example_dynamic_nacl.cpp $(BUILDS64)/wasm_build
+	$(CXX) -c $(CFLAGS64) -std=c++11 -fPIC -DUSE_WASM -I$(BUILDS64)/wasm_build -I$(WASM_SANDBOX_DIR)/wasm2c/ $< -o $@
+
+$(BUILDS64)/example_dynamic_wasm : $(BUILDS64)/example_dynamic_wasm.o
+	$(CXX) $(CFLAGS64) $< -o $@ $(WASM_SANDBOX_DIR)/bin/libwasm_sandbox.a -ldl
+
 $(BUILDS64)/scaling_benchmark_ps : ../scaling_benchmark.cpp
 	$(CXX) -c $(CFLAGS64) -std=c++11 -DUSE_PROCESS -I.. -I$(BUILDS64)/non_nacl_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@.o
 	$(CXX) $(CFLAGS64) $@.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a -o $@ -lrt -lpthread
@@ -318,6 +357,10 @@ $(BUILDS64)/run_dynamic_ps_simd_safe_api : $(BUILDS64)/example_dynamic_ps_simd_s
 	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build_simd/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS64)/example_dynamic_ps_simd_safe_api ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
+$(BUILDS64)/run_dynamic_wasm : $(BUILDS64)/example_dynamic_wasm
+	echo && echo dynamic_wasm 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_wasm ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/wasm_build/.libs/libjpeg_wasm.so
+
 $(BUILDS64)/run_scaling_benchmark_nacl:
 	echo && echo run_scaling_benchmark_nacl 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_nacl ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe
@@ -342,9 +385,11 @@ $(BUILDS64)/dbg_dynamic_nacl : debug $(BUILDS64)/run_dynamic_nacl
 $(BUILDS64)/dbg_dynamic_nacl_simd : debug $(BUILDS64)/run_dynamic_nacl_simd
 $(BUILDS64)/dbg_dynamic_ps : debug $(BUILDS64)/run_dynamic_ps
 $(BUILDS64)/dbg_dynamic_ps_simd : debug $(BUILDS64)/run_dynamic_ps_simd
+$(BUILDS64)/dbg_dynamic_wasm : debug $(BUILDS64)/run_dynamic_wasm
 
 debug :
 	$(eval GDB ?= gdb --args)
+	$(eval CFLAGS += -g)
 	$(eval CFLAGS32 += -g)
 	$(eval CFLAGS64 += -g)
 
