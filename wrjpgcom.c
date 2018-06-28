@@ -12,7 +12,7 @@
  * This may be useful as an example of the minimum logic needed to parse
  * JPEG markers.
  */
-
+#include <string.h>
 #define JPEG_CJPEG_DJPEG        /* to get the command-line config symbols */
 #include "jinclude.h"           /* get auto-config symbols, <stdio.h> */
 
