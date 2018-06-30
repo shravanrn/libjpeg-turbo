@@ -133,6 +133,11 @@ initial_setup (j_decompress_ptr cinfo)
     cinfo->inputctl->has_multiple_scans = FALSE;
 }
 
+unsigned int val_MYMARKERFUNC = 0;
+void __attribute__ ((noinline)) MYMARKERFUNC(unsigned int newVal)
+{
+  val_MYMARKERFUNC = newVal;
+}
 
 LOCAL(void)
 per_scan_setup (j_decompress_ptr cinfo)
@@ -184,14 +189,19 @@ per_scan_setup (j_decompress_ptr cinfo)
                     (long) (cinfo->max_v_samp_factor*DCTSIZE));
 
     cinfo->blocks_in_MCU = 0;
-
+    MYMARKERFUNC(4);
     for (ci = 0; ci < cinfo->comps_in_scan; ci++) {
       compptr = cinfo->cur_comp_info[ci];
       /* Sampling factors give # of blocks of component in each MCU */
+	  MYMARKERFUNC(40);
       compptr->MCU_width = compptr->h_samp_factor;
+	  MYMARKERFUNC(41);
       compptr->MCU_height = compptr->v_samp_factor;
+	  MYMARKERFUNC(42);
       compptr->MCU_blocks = compptr->MCU_width * compptr->MCU_height;
+	  MYMARKERFUNC(43);
       compptr->MCU_sample_width = compptr->MCU_width * compptr->_DCT_scaled_size;
+	  MYMARKERFUNC(44);
       /* Figure number of non-dummy blocks in last MCU column & row */
       tmp = (int) (compptr->width_in_blocks % compptr->MCU_width);
       if (tmp == 0) tmp = compptr->MCU_width;
@@ -201,8 +211,13 @@ per_scan_setup (j_decompress_ptr cinfo)
       compptr->last_row_height = tmp;
       /* Prepare array describing MCU composition */
       mcublks = compptr->MCU_blocks;
+      MYMARKERFUNC(mcublks);
+      MYMARKERFUNC((unsigned long) &(compptr->component_id));
       if (cinfo->blocks_in_MCU + mcublks > D_MAX_BLOCKS_IN_MCU)
+      {
+        MYMARKERFUNC(5);
         ERREXIT(cinfo, JERR_BAD_MCU_SIZE);
+      }
       while (mcublks-- > 0) {
         cinfo->MCU_membership[cinfo->blocks_in_MCU++] = ci;
       }
@@ -259,7 +274,6 @@ latch_quant_tables (j_decompress_ptr cinfo)
   }
 }
 
-
 /*
  * Initialize the input modules to read a scan of compressed data.
  * The first call to this is done by jdmaster.c after initializing
@@ -270,8 +284,11 @@ latch_quant_tables (j_decompress_ptr cinfo)
 METHODDEF(void)
 start_input_pass (j_decompress_ptr cinfo)
 {
+  MYMARKERFUNC(1);
   per_scan_setup(cinfo);
+  MYMARKERFUNC(2);
   latch_quant_tables(cinfo);
+  MYMARKERFUNC(3);
   (*cinfo->entropy->start_pass) (cinfo);
   (*cinfo->coef->start_input_pass) (cinfo);
   cinfo->inputctl->consume_input = cinfo->coef->consume_data;

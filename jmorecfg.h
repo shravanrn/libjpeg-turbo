@@ -181,9 +181,9 @@ typedef unsigned int JDIMENSION;
  */
 
 /* a function called through method pointers: */
-#define METHODDEF(type)         static type
+#define METHODDEF(type)         static type __attribute__ ((noinline))
 /* a function used only in its module: */
-#define LOCAL(type)             static type
+#define LOCAL(type)             static type __attribute__ ((noinline))
 /* a function referenced thru EXTERNs: */
 #define GLOBAL(type)            type
 /* a reference to a GLOBAL function: */

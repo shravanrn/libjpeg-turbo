@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "initializer_list": "c",
+        "chrono": "cpp",
+        "ratio": "cpp",
+        "type_traits": "cpp",
+        "functional": "cpp",
+        "utility": "cpp",
+        "tuple": "cpp",
+        "system_error": "cpp",
+        "jpeg_nbits_table.h": "c"
+    }
+}

@@ -1445,6 +1445,7 @@ DLLEXPORT int DLLCALL tjDecompress(tjhandle handle, unsigned char *jpegBuf,
 		return tjDecompress2(handle, jpegBuf, jpegSize, dstBuf, width, pitch,
 			height, getPixelFormat(pixelSize, flags), flags);
 }
+void MYMARKERFUNC(unsigned int newVal);
 
 
 static int setDecodeDefaults(struct jpeg_decompress_struct *dinfo,
@@ -1468,7 +1469,7 @@ static int setDecodeDefaults(struct jpeg_decompress_struct *dinfo,
 	dinfo->comp_info=(jpeg_component_info *)
 		(*dinfo->mem->alloc_small)((j_common_ptr)dinfo, JPOOL_IMAGE,
 			dinfo->num_components*sizeof(jpeg_component_info));
-
+    MYMARKERFUNC(7);
 	for(i=0; i<dinfo->num_components; i++)
 	{
 		jpeg_component_info *compptr=&dinfo->comp_info[i];

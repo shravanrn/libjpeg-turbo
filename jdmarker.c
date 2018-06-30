@@ -234,7 +234,7 @@ get_soi (j_decompress_ptr cinfo)
   return TRUE;
 }
 
-
+void MYMARKERFUNC(unsigned int newVal);
 LOCAL(boolean)
 get_sof (j_decompress_ptr cinfo, boolean is_prog, boolean is_arith)
 /* Process a SOFn marker */
@@ -274,17 +274,29 @@ get_sof (j_decompress_ptr cinfo, boolean is_prog, boolean is_arith)
     ERREXIT(cinfo, JERR_BAD_LENGTH);
 
   if (cinfo->comp_info == NULL) /* do only once, even if suspend */
+  {
+    MYMARKERFUNC(25);
     cinfo->comp_info = (jpeg_component_info *) (*cinfo->mem->alloc_small)
                         ((j_common_ptr) cinfo, JPOOL_IMAGE,
                          cinfo->num_components * sizeof(jpeg_component_info));
+    MYMARKERFUNC(26);
+  }
 
   for (ci = 0, compptr = cinfo->comp_info; ci < cinfo->num_components;
        ci++, compptr++) {
+    MYMARKERFUNC(27);
     compptr->component_index = ci;
+    MYMARKERFUNC(28);
     INPUT_BYTE(cinfo, compptr->component_id, return FALSE);
+    MYMARKERFUNC(29);
     INPUT_BYTE(cinfo, c, return FALSE);
+    MYMARKERFUNC(290);
+    MYMARKERFUNC(c);
     compptr->h_samp_factor = (c >> 4) & 15;
+	MYMARKERFUNC(compptr->h_samp_factor);
+    MYMARKERFUNC(291);
     compptr->v_samp_factor = (c     ) & 15;
+    MYMARKERFUNC(292);
     INPUT_BYTE(cinfo, compptr->quant_tbl_no, return FALSE);
 
     TRACEMS4(cinfo, 1, JTRC_SOF_COMPONENT,
@@ -297,7 +309,6 @@ get_sof (j_decompress_ptr cinfo, boolean is_prog, boolean is_arith)
   INPUT_SYNC(cinfo);
   return TRUE;
 }
-
 
 LOCAL(boolean)
 get_sos (j_decompress_ptr cinfo)
@@ -331,6 +342,8 @@ get_sos (j_decompress_ptr cinfo)
     INPUT_BYTE(cinfo, cc, return FALSE);
     INPUT_BYTE(cinfo, c, return FALSE);
 
+    MYMARKERFUNC(8);
+    MYMARKERFUNC((unsigned long)&(cinfo->comp_info));
     for (ci = 0, compptr = cinfo->comp_info;
          ci < cinfo->num_components && ci < MAX_COMPS_IN_SCAN;
          ci++, compptr++) {
@@ -341,8 +354,9 @@ get_sos (j_decompress_ptr cinfo)
     ERREXIT1(cinfo, JERR_BAD_COMPONENT_ID, cc);
 
   id_found:
-
+    MYMARKERFUNC(6);
     cinfo->cur_comp_info[i] = compptr;
+    MYMARKERFUNC(16);
     compptr->dc_tbl_no = (c >> 4) & 15;
     compptr->ac_tbl_no = (c     ) & 15;
 

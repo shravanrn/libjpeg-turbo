@@ -1,6 +1,6 @@
 CC=clang
 CXX=clang++
-override CFLAGS += -O3 -fPIC
+override CFLAGS += -O0 -fPIC
 CFLAGS32=$(CFLAGS) -m32
 CFLAGS64=$(CFLAGS) -m64
 LDFLAGS32=$(LDFLAGS) -m32
@@ -54,7 +54,7 @@ RUN_BASENAMES=run_dynamic_non_nacl run_dynamic_non_nacl_simd run_dynamic_nacl ru
 RUN32=$(addprefix $(BUILDS32)/,$(RUN_BASENAMES))
 RUN64=$(addprefix $(BUILDS64)/,$(RUN_BASENAMES))
 
-.PHONY : all all32 all64 run_all run_all32 run_all64 $(RUN32) $(RUN64) dbg_dynamic_non_nacl dbg_dynamic_nacl dbg_dynamic_ps debug clean kill_old_processes
+.PHONY : all all32 all64 run_all run_all32 run_all64 $(RUN32) $(RUN64) dbg_dynamic_non_nacl dbg_dynamic_nacl dbg_dynamic_ps debug clean kill_old_processes x64/wasm_build
 
 all : $(PRODUCTS)
 all32 : $(PRODUCTS32)
@@ -98,8 +98,8 @@ define convert_to_wasm =
 	$(WASM_SANDBOX_DIR)/bin/wasm2wat --inline-exports --inline-imports -f $(patsubst %.js,%.wasm,$(2)) -o $(patsubst %.js,%.wat,$(2)) && \
 	$(WASM_SANDBOX_DIR)/bin/wasm2c $(patsubst %.js,%.wasm,$(2)) -o $(patsubst %.js,%.c,$(2)) && \
 	$(WASM_SANDBOX_DIR)/builds/generateModuleSpecificConstants $(2) > $(patsubst %.js,%_rt.cpp,$(2)) && \
-	$(CC) $(CFLAGS) -I $(WASM_SANDBOX_DIR)/wasm2c -c $(patsubst %.js,%.c,$(2)) -o $(patsubst %.js,%.o,$(2)) && \
-	$(CXX) $(CFLAGS) -std=c++11 $(WASM_SANDBOX_DIR)/wasm2c/wasm-rt-impl.cpp $(WASM_SANDBOX_DIR)/wasm2c/wasm-rt-syscall-impl.cpp $(patsubst %.js,%_rt.cpp,$(2)) $(patsubst %.js,%.o,$(2)) -I $(WASM_SANDBOX_DIR)/wasm2c -fPIC -shared -o $(patsubst %.js,%_wasm.so,$(2))
+	$(CC) -O0 -g -fPIC -I $(WASM_SANDBOX_DIR)/wasm2c -c $(patsubst %.js,%.c,$(2)) -o $(patsubst %.js,%.o,$(2)) && \
+	$(CXX) -O0 -g -fPIC -std=c++11 $(WASM_SANDBOX_DIR)/wasm2c/wasm-rt-impl.cpp $(WASM_SANDBOX_DIR)/wasm2c/wasm-rt-syscall-impl.cpp $(patsubst %.js,%_rt.cpp,$(2)) $(patsubst %.js,%.o,$(2)) -I $(WASM_SANDBOX_DIR)/wasm2c -fPIC -shared -o $(patsubst %.js,%_wasm.so,$(2))
 endef
 
 SIMDFLAGS=
@@ -170,10 +170,8 @@ $(BUILDS64)/non_nacl_build_simd :
 SHELL := /bin/bash
 $(BUILDS64)/wasm_build :
 	mkdir -p $(BUILDS64)
-	$(call prepare_build,$@) && \
+	cd $(BUILDS64)/wasm_build && \
 	$(call load_emsdk_path) && \
-	../../../configure -host $(EMSCRIPTENHOST) --disable-shared CFLAGS='$(EMSCRIPTENCFLAGS)' LDFLAGS='$(EMSCRIPTENLDFLAGS)' CC=$(EMCC) LD=$(EMCC) AR=$(EMAR) $(NONSIMDFLAGS) NASM=$(NACL_NASM) && \
-	make clean && \
 	make && \
 	$(call convert_to_wasm,$(shell realpath $@)/.libs/libjpeg.a,$(shell realpath $@)/.libs/libjpeg.js)
 
@@ -277,7 +275,7 @@ $(BUILDS64)/example_dynamic_ps_safe_api : $(BUILDS64)/example_dynamic_ps_safe_ap
 $(BUILDS64)/example_dynamic_ps_simd_safe_api : $(BUILDS64)/example_dynamic_ps_simd_safe_api.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a
 	$(CXX) $(CFLAGS64) $^ -o $@ -lrt -lpthread
 
-$(BUILDS64)/example_dynamic_wasm.o : ../example_dynamic_nacl.cpp $(BUILDS64)/wasm_build
+$(BUILDS64)/example_dynamic_wasm.o : ../example_dynamic_nacl.cpp
 	$(CXX) -c $(CFLAGS64) -std=c++11 -fPIC -DUSE_WASM -I$(BUILDS64)/wasm_build -I$(WASM_SANDBOX_DIR)/wasm2c/ $< -o $@
 
 $(BUILDS64)/example_dynamic_wasm : $(BUILDS64)/example_dynamic_wasm.o

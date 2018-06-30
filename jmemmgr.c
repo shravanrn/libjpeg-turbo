@@ -426,6 +426,7 @@ alloc_large (j_common_ptr cinfo, int pool_id, size_t sizeofobject)
  * the start) to 2 * ALIGN_SIZE so that the upsampling routines don't have
  * to be as careful about size.
  */
+void MYMARKERFUNC(unsigned int newVal);
 
 METHODDEF(JSAMPARRAY)
 alloc_sarray (j_common_ptr cinfo, int pool_id,
@@ -461,23 +462,37 @@ alloc_sarray (j_common_ptr cinfo, int pool_id,
     rowsperchunk = numrows;
   mem->last_rowsperchunk = rowsperchunk;
 
+  MYMARKERFUNC(301);
   /* Get space for row pointers (small object) */
   result = (JSAMPARRAY) alloc_small(cinfo, pool_id,
                                     (size_t) (numrows * sizeof(JSAMPROW)));
+  MYMARKERFUNC(302);
 
   /* Get the rows themselves (large objects) */
   currow = 0;
+  MYMARKERFUNC(303);MYMARKERFUNC(numrows);MYMARKERFUNC(rowsperchunk);
   while (currow < numrows) {
+    MYMARKERFUNC(304);
     rowsperchunk = MIN(rowsperchunk, numrows - currow);
+    MYMARKERFUNC(305);
     workspace = (JSAMPROW) alloc_large(cinfo, pool_id,
         (size_t) ((size_t) rowsperchunk * (size_t) samplesperrow
                   * sizeof(JSAMPLE)));
+    MYMARKERFUNC(306);
+    MYMARKERFUNC(rowsperchunk);
     for (i = rowsperchunk; i > 0; i--) {
+      MYMARKERFUNC(307);
+	  MYMARKERFUNC(i);
+	  MYMARKERFUNC(currow);
+	  MYMARKERFUNC((unsigned long)result);
       result[currow++] = workspace;
+      MYMARKERFUNC(308);
       workspace += samplesperrow;
+      MYMARKERFUNC(309);
     }
   }
 
+  MYMARKERFUNC(310);
   return result;
 }
 
