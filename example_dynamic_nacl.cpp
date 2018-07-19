@@ -166,6 +166,30 @@ t_jpeg_destroy_decompress ptr_jpeg_destroy_decompress;
 #endif
 
 
+#ifdef USE_PROCESS
+static void* mallocInSandbox(JPEGProcessSandbox* sandbox, size_t size) {
+  return sandbox->mallocInSandbox(size);
+}
+static void freeInSandbox(JPEGProcessSandbox* sandbox, void* ptr) {
+  sandbox->freeInSandbox(ptr);
+}
+#define SANDBOX_CALLBACK
+#define getSandboxedAddress(sb, ptr) ptr
+#define getUnsandboxedAddress(sb, ptr) ptr
+
+#elif defined(USE_WASM)
+static void* mallocInSandbox(WasmSandbox* sandbox, size_t size) {
+  return sandbox->mallocInSandbox(size);
+}
+static void freeInSandbox(WasmSandbox* sandbox, void* ptr) {
+  sandbox->freeInSandbox(ptr);
+}
+#define SANDBOX_CALLBACK
+#define getSandboxedAddress(sb, ptr) sb->getSandboxedPointer((void*) ptr)
+#define getUnsandboxedAddress(sb, ptr) sb->getUnsandboxedPointer((void*) ptr)
+
+#endif
+
 struct jpeg_error_mgr * d_jpeg_std_error(struct jpeg_error_mgr * err)
 {
   START_TIMER();
@@ -484,7 +508,8 @@ JSAMPARRAY d_alloc_sarray(void* alloc_sarray, j_common_ptr cinfo, int pool_id, J
   return sandbox->inv_alloc_sarray_ps(cinfo, pool_id, samplesperrow, numrows);
 #elif defined(USE_WASM)
   using fnType = JSAMPARRAY(*)(j_common_ptr, int, JDIMENSION, JDIMENSION);
-  return sandbox->invokeFunction((fnType)alloc_sarray, cinfo, pool_id, samplesperrow, numrows);
+  void* fnPtr = sandbox->getUnsandboxedFuncPointer(getSandboxedAddress(sandbox, alloc_sarray));
+  return sandbox->invokeFunction((fnType)fnPtr, cinfo, pool_id, samplesperrow, numrows);
 #else
 #error No sandbox type defined.
 #endif
@@ -507,29 +532,6 @@ void put_scanline_someplace(JSAMPROW rowBuffer, int row_stride)
   curr_image_row++;
 }
 
-#ifdef USE_PROCESS
-static void* mallocInSandbox(JPEGProcessSandbox* sandbox, size_t size) {
-  return sandbox->mallocInSandbox(size);
-}
-static void freeInSandbox(JPEGProcessSandbox* sandbox, void* ptr) {
-  sandbox->freeInSandbox(ptr);
-}
-#define SANDBOX_CALLBACK
-#define getSandboxedAddress(sb, ptr) ptr
-#define getUnsandboxedAddress(sb, ptr) ptr
-
-#elif defined(USE_WASM)
-static void* mallocInSandbox(WasmSandbox* sandbox, size_t size) {
-  return sandbox->mallocInSandbox(size);
-}
-static void freeInSandbox(WasmSandbox* sandbox, void* ptr) {
-  sandbox->freeInSandbox(ptr);
-}
-#define SANDBOX_CALLBACK
-#define getSandboxedAddress(sb, ptr) sb->getSandboxedPointer((void*) ptr)
-#define getUnsandboxedAddress(sb, ptr) sb->getUnsandboxedPointer((void*) ptr)
-
-#endif
 
 /*
  * Sample routine for JPEG compression.  We assume that the target file name

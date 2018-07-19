@@ -54,7 +54,7 @@ RUN_BASENAMES=run_dynamic_non_nacl run_dynamic_non_nacl_simd run_dynamic_nacl ru
 RUN32=$(addprefix $(BUILDS32)/,$(RUN_BASENAMES))
 RUN64=$(addprefix $(BUILDS64)/,$(RUN_BASENAMES))
 
-.PHONY : all all32 all64 run_all run_all32 run_all64 $(RUN32) $(RUN64) dbg_dynamic_non_nacl dbg_dynamic_nacl dbg_dynamic_ps debug clean kill_old_processes x64/wasm_build
+.PHONY : all all32 all64 run_all run_all32 run_all64 $(RUN32) $(RUN64) dbg_dynamic_non_nacl dbg_dynamic_nacl dbg_dynamic_ps debug clean kill_old_processes $(BUILDS64)/wasm_build
 
 all : $(PRODUCTS)
 all32 : $(PRODUCTS32)
@@ -88,7 +88,7 @@ define create_libjpeg_nexe_64 =
 endef
 
 define load_emsdk_path = 
-	source $(EMCC_DIR)/emsdk_env.sh && 	export EMCC_EXPERIMENTAL_USE_LLD=0
+	source $(EMCC_DIR)/emsdk_env.sh # && 	export EMCC_EXPERIMENTAL_USE_LLD=0
 endef
 
 # 1 - .a input lib file
@@ -170,10 +170,12 @@ $(BUILDS64)/non_nacl_build_simd :
 SHELL := /bin/bash
 $(BUILDS64)/wasm_build :
 	mkdir -p $(BUILDS64)
-	cd $(BUILDS64)/wasm_build && \
+	$(call prepare_build,$@) && \
 	$(call load_emsdk_path) && \
+	../../../configure -host $(EMSCRIPTENHOST) --disable-shared CFLAGS='$(EMSCRIPTENCFLAGS)' LDFLAGS='$(EMSCRIPTENLDFLAGS)' CC=$(EMCC) LD=$(EMCC) AR=$(EMAR) $(NONSIMDFLAGS) NASM=$(NACL_NASM) && \
+	make clean && \
 	make && \
-	$(call convert_to_wasm,$(shell realpath $@)/.libs/libjpeg.a,$(shell realpath $@)/.libs/libjpeg.js)
+	$(call convert_to_wasm,$(join $(shell realpath $@), /.libs/libjpeg.a),$(join $(shell realpath $@), /.libs/libjpeg.js))
 
 $(BUILDS32)/example_dynamic_non_nacl : ../example_dynamic_non_nacl.cpp $(BUILDS32)/non_nacl_build
 	$(CXX) $(CFLAGS32) -std=c++11 -I$(BUILDS32)/non_nacl_build $< -o $@ -ldl
@@ -278,7 +280,7 @@ $(BUILDS64)/example_dynamic_ps_simd_safe_api : $(BUILDS64)/example_dynamic_ps_si
 $(BUILDS64)/example_dynamic_wasm.o : ../example_dynamic_nacl.cpp
 	$(CXX) -c $(CFLAGS64) -std=c++11 -fPIC -DUSE_WASM -I$(BUILDS64)/wasm_build -I$(WASM_SANDBOX_DIR)/wasm2c/ $< -o $@
 
-$(BUILDS64)/example_dynamic_wasm : $(BUILDS64)/example_dynamic_wasm.o
+$(BUILDS64)/example_dynamic_wasm : $(BUILDS64)/example_dynamic_wasm.o $(WASM_SANDBOX_DIR)/bin/libwasm_sandbox.a
 	$(CXX) $(CFLAGS64) $< -o $@ $(WASM_SANDBOX_DIR)/bin/libwasm_sandbox.a -ldl
 
 $(BUILDS64)/scaling_benchmark_ps : ../scaling_benchmark.cpp
