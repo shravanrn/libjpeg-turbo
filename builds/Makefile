@@ -47,7 +47,7 @@ ALLBUILDS32=$(addprefix $(BUILDS32)/,$(BUILDS_BASENAMES)) $(addprefix $(BUILDS32
 ALLBUILDS64=$(addprefix $(BUILDS64)/,$(BUILDS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd,$(BUILDS_BASENAMES)))
 PRODUCTS_BASENAMES=example_dynamic_non_nacl example_dynamic_nacl example_dynamic_ps
 PRODUCTS32=$(addprefix $(BUILDS32)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS32)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES)))
-PRODUCTS64=$(addprefix $(BUILDS64)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES))) $(addprefix $(BUILDS64)/,$(addsuffix _safe_api, $(PRODUCTS_BASENAMES))) $(addprefix $(BUILDS64)/,$(addsuffix _simd_safe_api, $(PRODUCTS_BASENAMES)))
+PRODUCTS64=$(addprefix $(BUILDS64)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES))) $(addprefix $(BUILDS64)/,$(addsuffix _safe_api, $(PRODUCTS_BASENAMES))) $(addprefix $(BUILDS64)/,$(addsuffix _simd_safe_api, $(PRODUCTS_BASENAMES))) $(BUILDS64)/scaling_benchmark_nacl $(BUILDS64)/scaling_benchmark_ps
 PRODUCTS=$(PRODUCTS32) $(PRODUCTS64)
 
 RUN_BASENAMES=run_dynamic_non_nacl run_dynamic_non_nacl_simd run_dynamic_nacl run_dynamic_nacl_simd run_dynamic_nacl_safe_api run_dynamic_nacl_simd_safe_api run_dynamic_ps run_dynamic_ps_simd run_dynamic_ps_safe_api run_dynamic_ps_simd_safe_api
@@ -60,7 +60,7 @@ all : $(PRODUCTS)
 all32 : $(PRODUCTS32)
 all64 : $(PRODUCTS64)
 build32 : $(ALLBUILDS32)
-build64 : $(ALLBUILDS64) $(BUILDS64)/scaling_benchmark_nacl $(BUILDS64)/scaling_benchmark_ps
+build64 : $(ALLBUILDS64)
 
 run_all32 : $(RUN32)
 run_all64 : $(RUN64)
