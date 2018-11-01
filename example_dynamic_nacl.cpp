@@ -223,7 +223,7 @@ void d_jpeg_CreateCompress(j_compress_ptr cinfo, int version, size_t structsize)
 #elif defined(USE_PROCESS)
   sandbox->inv_jpeg_CreateCompress(cinfo, version, structsize);
 #elif defined(USE_WASM)
-  wasm_sandbox_invoke(sandbox, jpeg_CreateCompress, cinfo, version, structsize);
+  wasm_sandbox_invoke(sandbox, jpeg_CreateCompress, (j_compress_ptr) getSandboxedAddress(sandbox, cinfo), version, structsize);
 #else
 #error No sandbox type defined.
 #endif
@@ -241,7 +241,7 @@ void d_jpeg_mem_dest(j_compress_ptr cinfo, unsigned char ** outbuffer, unsigned 
 #elif defined(USE_PROCESS)
   sandbox->inv_jpeg_mem_dest(cinfo, outbuffer, outsize);
 #elif defined(USE_WASM)
-  wasm_sandbox_invoke(sandbox, jpeg_mem_dest, cinfo, outbuffer, outsize);
+  wasm_sandbox_invoke(sandbox, jpeg_mem_dest, (j_compress_ptr) getSandboxedAddress(sandbox, cinfo), (unsigned char **) getSandboxedAddress(sandbox, outbuffer), (unsigned long *) getSandboxedAddress(sandbox, outsize));
 #else
 #error No sandbox type defined.
 #endif
@@ -257,7 +257,7 @@ void d_jpeg_set_defaults(j_compress_ptr cinfo)
 #elif defined(USE_PROCESS)
   sandbox->inv_jpeg_set_defaults(cinfo);
 #elif defined(USE_WASM)
-  wasm_sandbox_invoke(sandbox, jpeg_set_defaults, cinfo);
+  wasm_sandbox_invoke(sandbox, jpeg_set_defaults, (j_compress_ptr) getSandboxedAddress(sandbox, cinfo));
 #else
 #error No sandbox type defined.
 #endif
@@ -275,7 +275,7 @@ void d_jpeg_set_quality(j_compress_ptr cinfo, int quality, boolean force_baselin
 #elif defined(USE_PROCESS)
   sandbox->inv_jpeg_set_quality(cinfo, quality, force_baseline);
 #elif defined(USE_WASM)
-  wasm_sandbox_invoke(sandbox, jpeg_set_quality, cinfo, quality, force_baseline);
+  wasm_sandbox_invoke(sandbox, jpeg_set_quality, (j_compress_ptr) getSandboxedAddress(sandbox, cinfo), quality, force_baseline);
 #else
 #error No sandbox type defined.
 #endif
@@ -292,7 +292,7 @@ void d_jpeg_start_compress(j_compress_ptr cinfo, boolean write_all_tables)
 #elif defined(USE_PROCESS)
   sandbox->inv_jpeg_start_compress(cinfo, write_all_tables);
 #elif defined(USE_WASM)
-  wasm_sandbox_invoke(sandbox, jpeg_start_compress, cinfo, write_all_tables);
+  wasm_sandbox_invoke(sandbox, jpeg_start_compress, (j_compress_ptr) getSandboxedAddress(sandbox, cinfo), write_all_tables);
 #else
 #error No sandbox type defined.
 #endif
@@ -314,7 +314,7 @@ JDIMENSION d_jpeg_write_scanlines(j_compress_ptr cinfo, JSAMPARRAY scanlines, JD
   END_TIMER();
   return retval;
 #elif defined(USE_WASM)
-  auto retval = wasm_sandbox_invoke(sandbox, jpeg_write_scanlines, cinfo, scanlines, num_lines);
+  auto retval = wasm_sandbox_invoke(sandbox, jpeg_write_scanlines, (j_compress_ptr) getSandboxedAddress(sandbox, cinfo), (JSAMPARRAY) getSandboxedAddress(sandbox, scanlines), num_lines);
   END_TIMER();
   return retval;
 #else
@@ -331,7 +331,7 @@ void d_jpeg_finish_compress(j_compress_ptr cinfo)
 #elif defined(USE_PROCESS)
   sandbox->inv_jpeg_finish_compress(cinfo);
 #elif defined(USE_WASM)
-  wasm_sandbox_invoke(sandbox, jpeg_finish_compress, cinfo);
+  wasm_sandbox_invoke(sandbox, jpeg_finish_compress, (j_compress_ptr) getSandboxedAddress(sandbox, cinfo));
 #else
 #error No sandbox type defined.
 #endif
@@ -347,7 +347,7 @@ void d_jpeg_destroy_compress(j_compress_ptr cinfo)
 #elif defined(USE_PROCESS)
   sandbox->inv_jpeg_destroy_compress(cinfo);
 #elif defined(USE_WASM)
-  wasm_sandbox_invoke(sandbox, jpeg_destroy_compress, cinfo);
+  wasm_sandbox_invoke(sandbox, jpeg_destroy_compress, (j_compress_ptr) getSandboxedAddress(sandbox, cinfo));
 #else
 #error No sandbox type defined.
 #endif
@@ -365,7 +365,7 @@ void d_jpeg_CreateDecompress(j_decompress_ptr cinfo, int version, size_t structs
 #elif defined(USE_PROCESS)
   sandbox->inv_jpeg_CreateDecompress(cinfo, version, structsize);
 #elif defined(USE_WASM)
-  wasm_sandbox_invoke(sandbox, jpeg_CreateDecompress, cinfo, version, structsize);
+  wasm_sandbox_invoke(sandbox, jpeg_CreateDecompress, (j_decompress_ptr) getSandboxedAddress(sandbox, cinfo), version, structsize);
 #else
 #error No sandbox type defined.
 #endif
@@ -383,7 +383,7 @@ void d_jpeg_mem_src(j_decompress_ptr cinfo, unsigned char * inbuffer, unsigned l
 #elif defined(USE_PROCESS)
   sandbox->inv_jpeg_mem_src(cinfo, inbuffer, insize);
 #elif defined(USE_WASM)
-  wasm_sandbox_invoke(sandbox, jpeg_mem_src, cinfo, inbuffer, insize);
+  wasm_sandbox_invoke(sandbox, jpeg_mem_src, (j_decompress_ptr) getSandboxedAddress(sandbox, cinfo), (unsigned char *) getSandboxedAddress(sandbox, inbuffer), insize);
 #else
 #error No sandbox type defined.
 #endif
@@ -404,7 +404,7 @@ int d_jpeg_read_header(j_decompress_ptr cinfo, boolean require_image)
   END_TIMER();
   return retval;
 #elif defined(USE_WASM)
-  auto retval = wasm_sandbox_invoke(sandbox, jpeg_read_header, cinfo, require_image);
+  auto retval = wasm_sandbox_invoke(sandbox, jpeg_read_header, (j_decompress_ptr) getSandboxedAddress(sandbox, cinfo), require_image);
   END_TIMER();
   return retval;
 #else
@@ -425,7 +425,7 @@ boolean d_jpeg_start_decompress(j_decompress_ptr cinfo)
   END_TIMER();
   return retval;
 #elif defined(USE_WASM)
-  auto retval = wasm_sandbox_invoke(sandbox, jpeg_start_decompress, cinfo);
+  auto retval = wasm_sandbox_invoke(sandbox, jpeg_start_decompress, (j_decompress_ptr) getSandboxedAddress(sandbox, cinfo));
   END_TIMER();
   return retval;
 #else
@@ -448,7 +448,7 @@ JDIMENSION d_jpeg_read_scanlines(j_decompress_ptr cinfo, JSAMPARRAY scanlines, J
   END_TIMER();
   return retval;
 #elif defined(USE_WASM)
-  auto retval = wasm_sandbox_invoke(sandbox, jpeg_read_scanlines, cinfo, scanlines, max_lines);
+  auto retval = wasm_sandbox_invoke(sandbox, jpeg_read_scanlines, (j_decompress_ptr) getSandboxedAddress(sandbox, cinfo), (JSAMPARRAY) getSandboxedAddress(sandbox, scanlines), max_lines);
   END_TIMER();
   return retval;
 #else
@@ -469,7 +469,7 @@ boolean d_jpeg_finish_decompress(j_decompress_ptr cinfo)
   END_TIMER();
   return retval;
 #elif defined(USE_WASM)
-  auto retval = wasm_sandbox_invoke(sandbox, jpeg_finish_decompress, cinfo);
+  auto retval = wasm_sandbox_invoke(sandbox, jpeg_finish_decompress, (j_decompress_ptr) getSandboxedAddress(sandbox, cinfo));
   END_TIMER();
   return retval;
 #else
@@ -486,7 +486,7 @@ void d_jpeg_destroy_decompress(j_decompress_ptr cinfo)
 #elif defined(USE_PROCESS)
   sandbox->inv_jpeg_destroy_decompress(cinfo);
 #elif defined(USE_WASM)
-  wasm_sandbox_invoke(sandbox, jpeg_destroy_decompress, cinfo);
+  wasm_sandbox_invoke(sandbox, jpeg_destroy_decompress, (j_decompress_ptr) getSandboxedAddress(sandbox, cinfo));
 #else
 #error No sandbox type defined.
 #endif
@@ -509,7 +509,7 @@ JSAMPARRAY d_alloc_sarray(void* alloc_sarray, j_common_ptr cinfo, int pool_id, J
 #elif defined(USE_WASM)
   using fnType = JSAMPARRAY(*)(j_common_ptr, int, JDIMENSION, JDIMENSION);
   void* fnPtr = sandbox->getUnsandboxedFuncPointer(getSandboxedAddress(sandbox, alloc_sarray));
-  return sandbox->invokeFunction((fnType)fnPtr, cinfo, pool_id, samplesperrow, numrows);
+  return sandbox->invokeFunction((fnType)fnPtr, (j_decompress_ptr) getSandboxedAddress(sandbox, cinfo), pool_id, samplesperrow, numrows);
 #else
 #error No sandbox type defined.
 #endif
@@ -761,6 +761,11 @@ SANDBOX_CALLBACK void my_error_exit_stub(uintptr_t sandboxPtr)
   //We should not assume anything about - need to have some sort of validation here
   my_error_exit(cinfo);
 }
+#elif defined(USE_WASM)
+void my_error_exit_stub(void* state, j_common_ptr cinfo)
+{
+  my_error_exit(cinfo);
+}
 #endif
 
 /*
@@ -806,7 +811,7 @@ read_JPEG_file (unsigned char *fileBuff, unsigned long fsize)
 #elif defined(USE_PROCESS)
   auto callback = sandbox->registerCallback<JPEG::CB_TYPE_0>(my_error_exit, nullptr);
 #elif defined(USE_WASM)
-  auto callback = (uintptr_t) sandbox->registerCallback(my_error_exit)->callbackSlot;
+  auto callback = (uintptr_t) sandbox->registerCallback(my_error_exit_stub, sandbox)->callbackSlot;
 #else
 #error No sandbox type defined.
 #endif

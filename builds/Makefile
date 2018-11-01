@@ -88,13 +88,17 @@ define create_libjpeg_nexe_64 =
 endef
 
 define load_emsdk_path = 
-	source $(EMCC_DIR)/emsdk_env.sh # && 	export EMCC_EXPERIMENTAL_USE_LLD=0
+	source $(EMCC_DIR)/emsdk_env.sh
 endef
 
 # 1 - .a input lib file
 # 2 - .js output file
 define convert_to_wasm =
-	$(EMCC) $(1) -O0 -s WASM=1 -s TOTAL_MEMORY=2147418112 -s ALLOW_MEMORY_GROWTH=0 -s LEGALIZE_JS_FFI=0 -s EMULATED_FUNCTION_POINTERS=1 -s "EXPORTED_FUNCTIONS=[$$($(WASM_SANDBOX_DIR)/builds/getLLVMFileFunctions $(1)), '_malloc', '_free']" -o $(2) && \
+	mkdir mainCombine && \
+	cd mainCombine && \
+	llvm-ar -x $(1) && \
+	cd .. && \
+	$(EMCC) ./mainCombine/*.o -O0 -s WASM=1 -s TOTAL_MEMORY=2147418112 -s ALLOW_MEMORY_GROWTH=0 -s LEGALIZE_JS_FFI=0 -s EMULATED_FUNCTION_POINTERS=1 -s "EXPORTED_FUNCTIONS=[$$($(WASM_SANDBOX_DIR)/builds/getLLVMFileFunctions $(1)), '_malloc', '_free']" -o $(2) && \
 	$(WASM_SANDBOX_DIR)/bin/wasm2wat --inline-exports --inline-imports -f $(patsubst %.js,%.wasm,$(2)) -o $(patsubst %.js,%.wat,$(2)) && \
 	$(WASM_SANDBOX_DIR)/bin/wasm2c $(patsubst %.js,%.wasm,$(2)) -o $(patsubst %.js,%.c,$(2)) && \
 	$(WASM_SANDBOX_DIR)/builds/generateModuleSpecificConstants $(2) > $(patsubst %.js,%_rt.cpp,$(2)) && \
@@ -175,7 +179,7 @@ $(BUILDS64)/wasm_build :
 	../../../configure -host $(EMSCRIPTENHOST) --disable-shared CFLAGS='$(EMSCRIPTENCFLAGS)' LDFLAGS='$(EMSCRIPTENLDFLAGS)' CC=$(EMCC) LD=$(EMCC) AR=$(EMAR) $(NONSIMDFLAGS) NASM=$(NACL_NASM) && \
 	make clean && \
 	make && \
-	$(call convert_to_wasm,$(join $(shell realpath $@), /.libs/libjpeg.a),$(join $(shell realpath $@), /.libs/libjpeg.js))
+	$(call convert_to_wasm,$(join $(abspath $@), /.libs/libjpeg.a),$(join $(abspath $@), /.libs/libjpeg.js))
 
 $(BUILDS32)/example_dynamic_non_nacl : ../example_dynamic_non_nacl.cpp $(BUILDS32)/non_nacl_build
 	$(CXX) $(CFLAGS32) -std=c++11 -I$(BUILDS32)/non_nacl_build $< -o $@ -ldl
