@@ -204,7 +204,7 @@ struct jpeg_error_mgr * d_jpeg_std_error(struct jpeg_error_mgr * err)
   END_TIMER();
   return retval;
 #elif defined(USE_WASM)
-  auto retval = wasm_sandbox_invoke(sandbox, jpeg_std_error, err);
+  auto retval = wasm_sandbox_invoke(sandbox, jpeg_std_error, getSandboxedAddress(sandbox, err));
   END_TIMER();
   return retval;
 #else
