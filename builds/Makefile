@@ -166,7 +166,7 @@ $(BUILDS64)/wasm_build :
 	../../../configure -host $(EMSCRIPTENHOST) --disable-shared CFLAGS='$(EMSCRIPTENCFLAGS)' LDFLAGS='$(EMSCRIPTENLDFLAGS)' CC=$(EMCC) LD=$(EMCC) AR=$(EMAR) $(NONSIMDFLAGS) NASM=$(NACL_NASM) && \
 	make clean && \
 	make && \
-	$(call convert_to_wasm, .libs/libjpeg.a, .libs/libjpeg.js, -std=c++11)
+	$(call convert_to_wasm,$(join $(abspath $@),/.libs/libjpeg.a),$(join $(abspath $@),/.libs/libjpeg_wasm.js),-std=c++11)
 
 $(BUILDS32)/example_dynamic_non_nacl : ../example_dynamic_non_nacl.cpp $(BUILDS32)/non_nacl_build
 	$(CXX) $(CFLAGS32) -std=c++11 -I$(BUILDS32)/non_nacl_build $< -o $@ -ldl
