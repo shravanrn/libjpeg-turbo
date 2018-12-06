@@ -166,7 +166,7 @@ $(BUILDS64)/wasm_build :
 	../../../configure -host $(EMSCRIPTENHOST) --disable-shared CFLAGS='$(EMSCRIPTENCFLAGS)' LDFLAGS='$(EMSCRIPTENLDFLAGS)' CC=$(EMCC) LD=$(EMCC) AR=$(EMAR) $(NONSIMDFLAGS) NASM=$(NACL_NASM) && \
 	make clean && \
 	make && \
-	$(call convert_to_wasm,$(join $(abspath $@),/.libs/libjpeg.a),$(join $(abspath $@),/.libs/libjpeg_wasm.js),-std=c++11)
+	$(call convert_to_wasm,$(join $(abspath $@),/.libs/libjpeg.a),$(join $(abspath $@),/.libs/libjpeg_wasm.js),$(CFLAGS64) -std=c++11)
 
 $(BUILDS32)/example_dynamic_non_nacl : ../example_dynamic_non_nacl.cpp $(BUILDS32)/non_nacl_build
 	$(CXX) $(CFLAGS32) -std=c++11 -I$(BUILDS32)/non_nacl_build $< -o $@ -ldl
@@ -272,7 +272,7 @@ $(BUILDS64)/example_dynamic_wasm.o : ../example_dynamic_nacl.cpp
 	$(CXX) -c $(CFLAGS64) -std=c++11 -fPIC -DUSE_WASM -I$(BUILDS64)/wasm_build -I$(WASM_SANDBOX_DIR)/wasm2c/ $< -o $@
 
 $(BUILDS64)/example_dynamic_wasm : $(BUILDS64)/example_dynamic_wasm.o $(WASM_SANDBOX_DIR)/bin/libwasm_sandbox.a
-	$(CXX) $(CFLAGS64) $< -o $@ $(WASM_SANDBOX_DIR)/bin/libwasm_sandbox.a -ldl
+	$(CXX) $(CFLAGS64) $< -o $@ $(WASM_SANDBOX_DIR)/bin/libwasm_sandbox.o -ldl
 
 $(BUILDS64)/scaling_benchmark_ps : ../scaling_benchmark.cpp
 	$(CXX) -c $(CFLAGS64) -std=c++11 -DUSE_PROCESS -I.. -I$(BUILDS64)/non_nacl_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@.o
