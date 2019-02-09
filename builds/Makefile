@@ -287,89 +287,89 @@ $(BUILDS64)/scaling_benchmark_ps : ../scaling_benchmark.cpp
 	$(CXX) -c $(CFLAGS64) -std=c++11 -DUSE_PROCESS -I.. -I$(BUILDS64)/non_nacl_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@.o
 	$(CXX) $(CFLAGS64) $@.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a -o $@ -lrt -lpthread
 
-$(BUILDS32)/run_dynamic_non_nacl : $(BUILDS32)/example_dynamic_non_nacl
+$(BUILDS32)/run_dynamic_non_nacl : $(BUILDS32)/example_dynamic_non_nacl kill_old_processes
 	echo && echo dynamic_non_nacl 32-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_dynamic_non_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build/.libs/libjpeg.so
 
-$(BUILDS64)/run_dynamic_non_nacl : $(BUILDS64)/example_dynamic_non_nacl
+$(BUILDS64)/run_dynamic_non_nacl : $(BUILDS64)/example_dynamic_non_nacl kill_old_processes
 	echo && echo dynamic_non_nacl 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_non_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build/.libs/libjpeg.so
 
-$(BUILDS32)/run_dynamic_non_nacl_simd : $(BUILDS32)/example_dynamic_non_nacl_simd
+$(BUILDS32)/run_dynamic_non_nacl_simd : $(BUILDS32)/example_dynamic_non_nacl_simd kill_old_processes
 	echo && echo dynamic_non_nacl_simd 32-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_dynamic_non_nacl_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build_simd/.libs/libjpeg.so
 
-$(BUILDS64)/run_dynamic_non_nacl_simd : $(BUILDS64)/example_dynamic_non_nacl_simd
+$(BUILDS64)/run_dynamic_non_nacl_simd : $(BUILDS64)/example_dynamic_non_nacl_simd kill_old_processes
 	echo && echo dynamic_non_nacl_simd 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_non_nacl_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so
 
-$(BUILDS32)/run_dynamic_nacl : $(BUILDS32)/example_dynamic_nacl
+$(BUILDS32)/run_dynamic_nacl : $(BUILDS32)/example_dynamic_nacl kill_old_processes
 	echo && echo dynamic_nacl 32-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_dynamic_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/nacl_build/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-32/staging/irt_core.nexe
 
-$(BUILDS64)/run_dynamic_nacl : $(BUILDS64)/example_dynamic_nacl
+$(BUILDS64)/run_dynamic_nacl : $(BUILDS64)/example_dynamic_nacl kill_old_processes
 	echo && echo dynamic_nacl 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_nacl ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/nacl_build/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe
 
-$(BUILDS32)/run_dynamic_nacl_simd : $(BUILDS32)/example_dynamic_nacl_simd
+$(BUILDS32)/run_dynamic_nacl_simd : $(BUILDS32)/example_dynamic_nacl_simd kill_old_processes
 	echo && echo dynamic_nacl_simd 32-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS32)/example_dynamic_nacl_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/nacl_build_simd/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-32/staging/irt_core.nexe
 
-$(BUILDS64)/run_dynamic_nacl_simd : $(BUILDS64)/example_dynamic_nacl_simd
+$(BUILDS64)/run_dynamic_nacl_simd : $(BUILDS64)/example_dynamic_nacl_simd kill_old_processes
 	echo && echo dynamic_nacl_simd 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_nacl_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe
 
-$(BUILDS64)/run_dynamic_nacl_safe_api : $(BUILDS64)/example_dynamic_nacl_safe_api
+$(BUILDS64)/run_dynamic_nacl_safe_api : $(BUILDS64)/example_dynamic_nacl_safe_api kill_old_processes
 	echo && echo dynamic_nacl_safe_api 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_nacl_safe_api ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/nacl_build/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe
 
-$(BUILDS64)/run_dynamic_nacl_simd_safe_api : $(BUILDS64)/example_dynamic_nacl_simd_safe_api
+$(BUILDS64)/run_dynamic_nacl_simd_safe_api : $(BUILDS64)/example_dynamic_nacl_simd_safe_api kill_old_processes
 	echo && echo dynamic_nacl_simd_safe_api 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_nacl_simd_safe_api ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe
 
-$(BUILDS32)/run_dynamic_ps : $(BUILDS32)/example_dynamic_ps $(OTHERSIDE_EXEC32)
+$(BUILDS32)/run_dynamic_ps : $(BUILDS32)/example_dynamic_ps $(OTHERSIDE_EXEC32) kill_old_processes
 	echo && echo dynamic_ps 32-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS32)/non_nacl_build/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS32)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build/.libs/libjpeg.so $(OTHERSIDE_EXEC32) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS64)/run_dynamic_ps : $(BUILDS64)/example_dynamic_ps $(OTHERSIDE_EXEC64)
+$(BUILDS64)/run_dynamic_ps : $(BUILDS64)/example_dynamic_ps $(OTHERSIDE_EXEC64) kill_old_processes
 	echo && echo dynamic_ps 64-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS64)/example_dynamic_ps ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS32)/run_dynamic_ps_simd : $(BUILDS32)/example_dynamic_ps_simd $(OTHERSIDE_EXEC32_SIMD)
+$(BUILDS32)/run_dynamic_ps_simd : $(BUILDS32)/example_dynamic_ps_simd $(OTHERSIDE_EXEC32_SIMD) kill_old_processes
 	echo && echo dynamic_ps_simd 32-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS32)/non_nacl_build_simd/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS32)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS32)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC32_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS64)/run_dynamic_ps_simd : $(BUILDS64)/example_dynamic_ps_simd $(OTHERSIDE_EXEC64_SIMD)
+$(BUILDS64)/run_dynamic_ps_simd : $(BUILDS64)/example_dynamic_ps_simd $(OTHERSIDE_EXEC64_SIMD) kill_old_processes
 	echo && echo dynamic_ps_simd 64-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build_simd/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS64)/example_dynamic_ps_simd ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS64)/run_dynamic_ps_safe_api : $(BUILDS64)/example_dynamic_ps_safe_api $(OTHERSIDE_EXEC64)
+$(BUILDS64)/run_dynamic_ps_safe_api : $(BUILDS64)/example_dynamic_ps_safe_api $(OTHERSIDE_EXEC64) kill_old_processes
 	echo && echo dynamic_ps_safe_api 64-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS64)/example_dynamic_ps_safe_api ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build/.libs/libjpeg.so $(OTHERSIDE_EXEC64) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS64)/run_dynamic_ps_simd_safe_api : $(BUILDS64)/example_dynamic_ps_simd_safe_api $(OTHERSIDE_EXEC64_SIMD)
+$(BUILDS64)/run_dynamic_ps_simd_safe_api : $(BUILDS64)/example_dynamic_ps_simd_safe_api $(OTHERSIDE_EXEC64_SIMD) kill_old_processes
 	echo && echo dynamic_ps_simd_safe_api 64-bit: && echo && \
 	LD_LIBRARY_PATH=$(BUILDS64)/non_nacl_build_simd/.libs:$(LD_LIBRARY_PATH) \
 	$(GDB) ./$(BUILDS64)/example_dynamic_ps_simd_safe_api ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS64)/run_dynamic_wasm : $(BUILDS64)/example_dynamic_wasm
+$(BUILDS64)/run_dynamic_wasm : $(BUILDS64)/example_dynamic_wasm kill_old_processes
 	echo && echo dynamic_wasm 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_wasm ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/wasm_build/.libs/libjpeg_wasm.so
 
-$(BUILDS64)/run_scaling_benchmark_nacl: $(BUILDS64)/scaling_benchmark_nacl
+$(BUILDS64)/run_scaling_benchmark_nacl: $(BUILDS64)/scaling_benchmark_nacl kill_old_processes
 	echo && echo run_scaling_benchmark_nacl 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_nacl ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe
 
-$(BUILDS64)/run_scaling_benchmark_ps: $(BUILDS64)/scaling_benchmark_ps
+$(BUILDS64)/run_scaling_benchmark_ps: $(BUILDS64)/scaling_benchmark_ps kill_old_processes
 	echo && echo run_scaling_benchmark_ps 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_ps $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS64)/run_scaling_benchmark_none: $(BUILDS64)/scaling_benchmark_none
+$(BUILDS64)/run_scaling_benchmark_none: $(BUILDS64)/scaling_benchmark_none kill_old_processes
 	echo && echo run_scaling_benchmark_none 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_none $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
@@ -394,7 +394,7 @@ debug :
 	$(eval CFLAGS64 += -g)
 
 kill_old_processes :
-	-pkill -u $(USER) -f ProcessSandbox_otherside
+	-pkill -f ProcessSandbox_otherside
 
 clean :
 	-rm -rf $(BUILDS32) $(BUILDS64) *.o
