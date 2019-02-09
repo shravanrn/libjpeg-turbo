@@ -361,15 +361,15 @@ $(BUILDS64)/run_dynamic_wasm : $(BUILDS64)/example_dynamic_wasm
 	echo && echo dynamic_wasm 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_wasm ../test.jpeg ../test_out.jpeg ./$(BUILDS64)/wasm_build/.libs/libjpeg_wasm.so
 
-$(BUILDS64)/run_scaling_benchmark_nacl:
+$(BUILDS64)/run_scaling_benchmark_nacl: $(BUILDS64)/scaling_benchmark_nacl
 	echo && echo run_scaling_benchmark_nacl 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_nacl ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe
 
-$(BUILDS64)/run_scaling_benchmark_ps:
+$(BUILDS64)/run_scaling_benchmark_ps: $(BUILDS64)/scaling_benchmark_ps
 	echo && echo run_scaling_benchmark_ps 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_ps $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
-$(BUILDS64)/run_scaling_benchmark_none:
+$(BUILDS64)/run_scaling_benchmark_none: $(BUILDS64)/scaling_benchmark_none
 	echo && echo run_scaling_benchmark_none 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_none $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
 
