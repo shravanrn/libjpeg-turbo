@@ -38,9 +38,12 @@ OTHERSIDE_EXEC32_SIMD ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32_
 OTHERSIDE_EXEC64_SIMD ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg64_simd
 
 # Core to pin main process (or only process) to, for the 'run' and 'debug' targets
-MAINCORE=3
+MAINCORE=1
 # Core to pin sandbox process to, for the 'run_dynamic_ps' and 'debug_dynamic_ps' targets
-SANDBOXCORE=3
+SANDBOXCORE=5
+
+# Default library process priority, for the 'run' and 'debug' targets
+DEFAULTLIBPRIO=0
 
 BUILDS_BASENAMES=non_nacl_build nacl_build
 ALLBUILDS32=$(addprefix $(BUILDS32)/,$(BUILDS_BASENAMES)) $(addprefix $(BUILDS32)/,$(addsuffix _simd,$(BUILDS_BASENAMES)))
@@ -358,7 +361,7 @@ $(BUILDS64)/run_scaling_benchmark_nacl: $(BUILDS64)/scaling_benchmark_nacl kill_
 
 $(BUILDS64)/run_scaling_benchmark_ps: $(BUILDS64)/scaling_benchmark_ps kill_old_processes
 	echo && echo run_scaling_benchmark_ps 64-bit: && echo && \
-	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_ps $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_ps $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE) $(DEFAULTLIBPRIO)
 
 $(BUILDS64)/run_scaling_benchmark_none: $(BUILDS64)/scaling_benchmark_none kill_old_processes
 	echo && echo run_scaling_benchmark_none 64-bit: && echo && \

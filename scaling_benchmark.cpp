@@ -389,7 +389,7 @@ read_JPEG_file (unsigned char * fileBuff, unsigned long fsize)
 }
 #endif
 
-void setup(const char* isolationFramework, const char* libraryPath, const char* maincore_as_str, const char* sbcore_as_str)
+void setup(const char* isolationFramework, const char* libraryPath, const char* maincore_as_str, const char* sbcore_as_str, int sbpriority)
 {
 #ifdef USE_NACL
   printf("Creating NaCl Sandbox for %s\n", libraryPath);
@@ -407,7 +407,7 @@ void setup(const char* isolationFramework, const char* libraryPath, const char* 
     printf("Bad sandboxcore argument\n");
     exit(1);
   }
-  sandbox = new JPEGProcessSandbox(libraryPath, maincore, sbcore);
+  sandbox = new JPEGProcessSandbox(libraryPath, maincore, sbcore, sbpriority);
   initCPPApi(sandbox);
 #else
 #endif
@@ -476,12 +476,14 @@ int main(int argc, char const *argv[])
 		}
 		setup(argv[2], argv[1], nullptr, nullptr);
 	#elif defined(USE_PROCESS)
-		if(argc < 4)
+		if(argc < 5)
 		{
 			printf("Error: ProcessSandbox_otherside main_process_core sandbox_process_core\n");
 			exit(1);
 		}
-		setup(nullptr, argv[1], argv[2], argv[3]);
+		int defaultlibprio;
+	    if(!sscanf(argv[4], "%i", &defaultlibprio)) { printf("Bad argument 4\n"); exit(1);}
+		setup(nullptr, argv[1], argv[2], argv[3], defaultlibprio);
 	#endif
 
 	switchToCurrentFolder(argv[0]);
