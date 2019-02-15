@@ -49,6 +49,7 @@
 #error No sandbox type defined.
 #endif
 
+#include <atomic>
 
 /*
  * ERROR HANDLING:
@@ -91,16 +92,16 @@ sandbox_nacl_load_library_api(jpeglib)
   #include <chrono>
   using namespace std::chrono;
 
-  long long timeSpentInJpeg = 0;
-  long long sandboxFuncOrCallbackInvocations = 0;
+  std::atomic<long long> timeSpentInJpeg(0);
+  std::atomic<long long> sandboxFuncOrCallbackInvocations(0);
   high_resolution_clock::time_point SandboxEnterTime;
   high_resolution_clock::time_point SandboxExitTime;
 
-  long long timeSpentOutsideJpeg = 0;
+  std::atomic<long long> timeSpentOutsideJpeg(0);
   high_resolution_clock::time_point OuterEnterTime;
   high_resolution_clock::time_point OuterExitTime;
 
-  long long programTime = 0;
+  std::atomic<long long> programTime(0);
   high_resolution_clock::time_point ProgramEnterTime;
   high_resolution_clock::time_point ProgramExitTime;
   
@@ -595,6 +596,8 @@ int dynamicLoad(char* path, char* libraryPath, char* maincore_as_str, char* sbco
   return 1;
 }
 
+#define NUM_READS 100
+
 int main(int argc, char** argv)
 {
   START_PROGRAM_TIMER();
@@ -642,16 +645,9 @@ int main(int argc, char** argv)
 
   fileBuff[fsize] = 0;
 
-  FILE * outfile;
-  if ((outfile = fopen(argv[2], "wb")) == NULL) {
-    fprintf(stderr, "can't open %s\n", argv[2]);
-    return 0;
-  }
+  for(unsigned i = 0; i < NUM_READS; i++) {
 
-  unverified_data<unsigned char **> p_outbuffer = newInSandbox<unsigned char *>(sandbox);
-  unverified_data<unsigned long *> p_outsize = newInSandbox<unsigned long>(sandbox);
-  *p_outbuffer = (unsigned char *) 0;
-  *p_outsize = 0;
+  printf("i = %u\n", i);
 
   if(!read_JPEG_file(fileBuff, fsize))
   {
@@ -665,60 +661,31 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  }
+
   #ifdef PRINT_FUNCTION_TIMES
     #if defined(_WIN32)
-      printf("Read JPEG invocations = %I64d, time = %I64d ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
-      printf("Read JPEG total time = %I64d ns\n", timeSpentOutsideJpeg);
+      printf("Read JPEG invocations = %I64d, time = %I64d ns\n", sandboxFuncOrCallbackInvocations.load(), timeSpentInJpeg.load());
+      printf("Read JPEG total time = %I64d ns\n", timeSpentOutsideJpeg.load());
     #else
-      printf("Read JPEG invocations = %lld, time = %lld ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
-      printf("Read JPEG total time = %lld ns\n", timeSpentOutsideJpeg);
+      printf("Read JPEG invocations = %lld, time = %lld ns\n", sandboxFuncOrCallbackInvocations.load(), timeSpentInJpeg.load());
+      printf("Read JPEG total time = %lld ns\n", timeSpentOutsideJpeg.load());
     #endif
   #endif
 
   printf("Width: %d, Height: %d\n", image_width, image_height);
 
-  #ifdef PRINT_FUNCTION_TIMES
-    timeSpentInJpeg = 0;
-    sandboxFuncOrCallbackInvocations = 0;
-    timeSpentOutsideJpeg = 0;
-  #endif
-
-  if(!write_JPEG_file(p_outbuffer, p_outsize, 30))
-  {
-    printf("Writing to file %s failed\n", argv[2]);
-    fflush(stdout);
-    return 1; 
-  }
-
-  #ifdef PRINT_FUNCTION_TIMES
-    #if defined(_WIN32)
-      printf("Write JPEG invocations = %I64d, time = %I64d ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
-      printf("Write JPEG total time = %I64d ns\n", timeSpentOutsideJpeg);
-    #else
-      printf("Write JPEG invocations = %lld, time = %lld ns\n", sandboxFuncOrCallbackInvocations, timeSpentInJpeg);
-      printf("Write JPEG total time = %lld ns\n", timeSpentOutsideJpeg);
-    #endif
-  #endif
-
   freeInSandbox(sandbox, image_buffer);
 
-  //to validate: outbuffer to outbuffer[outsize] should be in the sandbox
-  unsigned long validatedOutSize = (*p_outsize).UNSAFE_noVerify();
-  unsigned char * outbuffer_contents = (*p_outbuffer).sandbox_onlyVerifyAddressRange(validatedOutSize);
-
-  fwrite(outbuffer_contents, validatedOutSize, 1, outfile);
-  fclose(outfile);
   fclose(infile);
   freeInSandbox(sandbox, fileBuff);
-  freeInSandbox(sandbox, p_outbuffer);
-  freeInSandbox(sandbox, p_outsize);
   END_PROGRAM_TIMER();
 
   #ifdef PRINT_FUNCTION_TIMES
     #if defined(_WIN32)
-      printf("JPEG program time = %I64d ns\n", programTime);
+      printf("JPEG program time = %I64d ns\n", programTime.load());
     #else
-      printf("JPEG program time = %lld ns\n", programTime);
+      printf("JPEG program time = %lld ns\n", programTime.load());
     #endif
   #endif
 
