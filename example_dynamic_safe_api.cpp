@@ -50,6 +50,7 @@
 #endif
 
 #include <atomic>
+#include <pthread.h>
 
 /*
  * ERROR HANDLING:
@@ -87,7 +88,7 @@ sandbox_nacl_load_library_api(jpeglib)
 
 #define PRINT_FUNCTION_TIMES
 #ifdef PRINT_FUNCTION_TIMES
-  
+
   #include <inttypes.h>
   #include <chrono>
   using namespace std::chrono;
@@ -104,7 +105,7 @@ sandbox_nacl_load_library_api(jpeglib)
   std::atomic<long long> programTime(0);
   high_resolution_clock::time_point ProgramEnterTime;
   high_resolution_clock::time_point ProgramExitTime;
-  
+
   #define START_TIMER() SandboxEnterTime = high_resolution_clock::now(); \
     sandboxFuncOrCallbackInvocations++
 
@@ -153,9 +154,11 @@ sandbox_nacl_load_library_api(jpeglib)
  */
 
 #ifdef USE_NACL
-  NaClSandbox* sandbox;
+  #define TSandbox NaClSandbox
+  NaClSandbox* sandboxes[NUM_THREADS];
 #elif defined(USE_PROCESS)
-  JPEGProcessSandbox* sandbox;
+  #define TSandbox JPEGProcessSandbox
+  JPEGProcessSandbox* sandboxes[NUM_THREADS];
 #else
 #error No sandbox type defined.
 #endif
@@ -177,164 +180,6 @@ void put_scanline_someplace(unverified_data<JSAMPROW> rowBuffer, int row_stride)
 
   curr_image_row++;
 }
-
-/*
- * Sample routine for JPEG compression.  We assume that the target file name
- * and a compression quality factor are passed in.
- */
-
-int
-write_JPEG_file (unverified_data<unsigned char **> p_outbuffer, unverified_data<unsigned long *> p_outsize, int quality)
-{
-  /* This struct contains the JPEG compression parameters and pointers to
-   * working space (which is allocated as needed by the JPEG library).
-   * It is possible to have several such structures, representing multiple
-   * compression/decompression processes, in existence at once.  We refer
-   * to any one struct (and its associated working data) as a "JPEG object".
-   */
-  START_OUTER_TIMER();
-  auto p_cinfo = newInSandbox<jpeg_compress_struct>(sandbox);
-
-  /* This struct represents a JPEG error handler.  It is declared separately
-   * because applications often want to supply a specialized error handler
-   * (see the second half of this file for an example).  But here we just
-   * take the easy way out and use the standard error handler, which will
-   * print a message on stderr and call exit() if compression fails.
-   * Note that this struct must live as long as the main JPEG parameter
-   * struct, to avoid dangling-pointer problems.
-   */
-  auto p_jerr = newInSandbox<jpeg_error_mgr>(sandbox);
-
-  /* More stuff */
-
-  auto p_row_pointer = newInSandbox<JSAMPROW>(sandbox);
-  //JSAMPROW row_pointer[1];      /* pointer to JSAMPLE row[s] */
-
-  int row_stride;               /* physical row width in image buffer */
-
-  /* Step 1: allocate and initialize JPEG compression object */
-
-  /* We have to set up the error handler first, in case the initialization
-   * step fails.  (Unlikely, but it could happen if you are out of memory.)
-   * This routine fills in the contents of struct jerr, and returns jerr's
-   * address which we place into the link field in cinfo.
-   */
-  p_cinfo->err = sandbox_invoke(sandbox, jpeg_std_error, p_jerr);
-  /* Now we can initialize the JPEG compression object. */
-  sandbox_invoke(sandbox, jpeg_CreateCompress, p_cinfo, JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_compress_struct));
-
-  /* Step 2: specify data destination (eg, a file) */
-  /* Note: steps 2 and 3 can be done in either order. */
-
-  /* Here we use the library-supplied code to send compressed data to a
-   * stdio stream.  You can also write your own code to do something else.
-   * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
-   * requires it in order to write binary files.
-   */
-
-  sandbox_invoke(sandbox, jpeg_mem_dest, p_cinfo, p_outbuffer, p_outsize);
-
-  /* Step 3: set parameters for compression */
-
-  /* First we supply a description of the input image.
-   * Four fields of the cinfo struct must be filled in:
-   */
-
-  p_cinfo->image_width = image_width;      /* image width and height, in pixels */
-  p_cinfo->image_height = image_height;
-  p_cinfo->input_components = 3;           /* # of color components per pixel */
-  p_cinfo->in_color_space = JCS_RGB;       /* colorspace of input image */
-  /* Now use the library's routine to set default compression parameters.
-   * (You must set at least cinfo.in_color_space before calling this,
-   * since the defaults depend on the source color space.)
-   */
-  sandbox_invoke(sandbox, jpeg_set_defaults, p_cinfo);
-  /* Now you can set any non-default parameters you wish to.
-   * Here we just illustrate the use of quality (quantization table) scaling:
-   */
-  sandbox_invoke(sandbox, jpeg_set_quality, p_cinfo, quality, TRUE /* limit to baseline-JPEG values */);
-
-  /* Step 4: Start compressor */
-
-  /* TRUE ensures that we will write a complete interchange-JPEG file.
-   * Pass TRUE unless you are very sure of what you're doing.
-   */
-  sandbox_invoke(sandbox, jpeg_start_compress, p_cinfo, TRUE);
-
-  /* Step 5: while (scan lines remain to be written) */
-  /*           jpeg_write_scanlines(...); */
-
-  /* Here we use the library's state variable cinfo.next_scanline as the
-   * loop counter, so that we don't have to keep track ourselves.
-   * To keep things simple, we pass one scanline per call; you can pass
-   * more if you wish, though.
-   */
-  row_stride = image_width * 3; /* JSAMPLEs per row in image_buffer */
-
-  //This could cause a Denial of Service, but we do not handle that
-  while (p_cinfo->next_scanline.UNSAFE_noVerify() < image_height) {
-    /* jpeg_write_scanlines expects an array of pointers to scanlines.
-     * Here the array is only one element long, but you could pass
-     * more than one scanline at a time if that's more convenient.
-     */
-
-    // We want to pass the address of image_buffer[p_cinfo->next_scanline * row_stride]
-    // to a sandbox function
-    // this shouldn't need validation as we are only reading an address 
-    // even if the address is outside the sandbox, the function cannot access the data
-    p_row_pointer[0] = &image_buffer[p_cinfo->next_scanline.UNSAFE_noVerify() * row_stride];
-    (void) sandbox_invoke(sandbox, jpeg_write_scanlines, p_cinfo, (p_row_pointer), 1);
-  }
-
-  /* Step 6: Finish compression */
-
-  sandbox_invoke(sandbox, jpeg_finish_compress, p_cinfo);
-  /* After finish_compress, we can close the output file. */
-
-  /* Step 7: release JPEG compression object */
-
-  /* This is an important step since it will release a good deal of memory. */
-  sandbox_invoke(sandbox, jpeg_destroy_compress, p_cinfo);
-
-  freeInSandbox(sandbox, p_cinfo);
-  freeInSandbox(sandbox, p_jerr);
-  freeInSandbox(sandbox, p_row_pointer);
-
-  END_OUTER_TIMER();
-  /* And we're done! */
-  return 1;
-}
-
-
-/*
- * SOME FINE POINTS:
- *
- * In the above loop, we ignored the return value of jpeg_write_scanlines,
- * which is the number of scanlines actually written.  We could get away
- * with this because we were only relying on the value of cinfo.next_scanline,
- * which will be incremented correctly.  If you maintain additional loop
- * variables then you should be careful to increment them properly.
- * Actually, for output to a stdio stream you needn't worry, because
- * then jpeg_write_scanlines will write all the lines passed (or else exit
- * with a fatal error).  Partial writes can only occur if you use a data
- * destination module that can demand suspension of the compressor.
- * (If you don't know what that's for, you don't need it.)
- *
- * If the compressor requires full-image buffers (for entropy-coding
- * optimization or a multi-scan JPEG file), it will create temporary
- * files for anything that doesn't fit within the maximum-memory setting.
- * (Note that temp files are NOT needed if you use the default parameters.)
- * On some systems you may need to set up a signal handler to ensure that
- * temporary files are deleted if the program is interrupted.  See libjpeg.txt.
- *
- * Scanlines MUST be supplied in top-to-bottom order if you want your JPEG
- * files to be compatible with everyone else's.  If you cannot readily read
- * your data in that order, you'll need an intermediate array to hold the
- * image.  See rdtarga.c or rdbmp.c for examples of handling bottom-to-top
- * source data using the JPEG code's internal virtual-array mechanisms.
- */
-
-
 
 /******************** JPEG DECOMPRESSION SAMPLE INTERFACE *******************/
 
@@ -374,7 +219,7 @@ my_error_exit (unverified_data<j_common_ptr> cinfo)
 
 
 GLOBAL(int)
-read_JPEG_file (unverified_data<unsigned char *> fileBuff, unsigned long fsize)
+read_JPEG_file (TSandbox* sandbox, unverified_data<unsigned char *> fileBuff, unsigned long fsize)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -481,7 +326,7 @@ read_JPEG_file (unverified_data<unsigned char *> fileBuff, unsigned long fsize)
   if(!image_buffer)
   {
     printf("Memory alloc failure\n");
-    return 1; 
+    return 1;
   }
 
   /* Step 6: while (scan lines remain to be read) */
@@ -562,7 +407,8 @@ read_JPEG_file (unverified_data<unsigned char *> fileBuff, unsigned long fsize)
  */
 
 // For NACL we ignore maincore_as_str and sbcore_as_str.
-int dynamicLoad(char* path, char* libraryPath, char* maincore_as_str, char* sbcore_as_str)
+// sandbox: an OUT parameter
+int dynamicLoad(TSandbox* sandbox, char* path, char* libraryPath, char* maincore_as_str, char* sbcore_as_str)
 {
   END_PROGRAM_TIMER();
 #ifdef USE_NACL
@@ -597,6 +443,66 @@ int dynamicLoad(char* path, char* libraryPath, char* maincore_as_str, char* sbco
 }
 
 #define NUM_READS 100
+#define NUM_THREADS 10
+
+void* readJPEG(void* argv_vstar) {
+
+  char** argv = (char**) argv_vstar;
+
+  TSandbox* sandbox;
+
+#ifdef USE_NACL
+  if(!dynamicLoad(sandbox, argv[3], argv[4], NULL, NULL)) {
+#elif defined(USE_PROCESS)
+  if(!dynamicLoad(sandbox, argv[3], argv[4], argv[5], argv[6])) {
+#else
+#error No sandbox type defined.
+#endif
+    printf("Dynamic load failed\n");
+    return 1;
+  }
+
+  FILE* infile;
+  if ((infile = fopen(argv[1], "rb")) == NULL) {
+    fprintf(stderr, "can't open %s\n", argv[1]);
+    return 1;
+  }
+
+  fseek(infile, 0, SEEK_END);
+  unsigned long fsize = ftell(infile);
+  fseek(infile, 0, SEEK_SET);  //same as rewind(infile);
+
+  TSandbox* sandbox = (TSandbox*) sandbox_vstar;
+
+  unverified_data<unsigned char *> fileBuff = newInSandbox<unsigned char>(sandbox, fsize + 1);
+  //only reading from a buffer, no verification necessary
+  if(!fread(fileBuff.sandbox_onlyVerifyAddress(), fsize, 1, infile))
+  {
+    return 1;
+  }
+
+  fileBuff[fsize] = 0;
+
+  for(unsigned i = 0; i < NUM_READS; i++) {
+
+    printf("i = %u\n", i);
+
+    if(!read_JPEG_file(fileBuff, fsize))
+    {
+      if(image_buffer)
+      {
+        freeInSandbox(sandbox, image_buffer);
+      }
+
+      printf("Reading file %s failed\n", argv[1]);
+      fflush(stdout);
+      return 1;
+    }
+
+  }
+
+  return NULL;
+}
 
 int main(int argc, char** argv)
 {
@@ -615,62 +521,13 @@ int main(int argc, char** argv)
 
   printf("Starting\n");
 
-#ifdef USE_NACL
-  if(!dynamicLoad(argv[3], argv[4], NULL, NULL)) {
-#elif defined(USE_PROCESS)
-  if(!dynamicLoad(argv[3], argv[4], argv[5], argv[6])) {
-#else
-#error No sandbox type defined.
-#endif
-    printf("Dynamic load failed\n");
-    return 1;
-  }
-
-  FILE* infile;
-  if ((infile = fopen(argv[1], "rb")) == NULL) {
-    fprintf(stderr, "can't open %s\n", argv[1]);
-    return 1;
-  }
-
-  fseek(infile, 0, SEEK_END);
-  unsigned long fsize = ftell(infile);
-  fseek(infile, 0, SEEK_SET);  //same as rewind(infile);
-
-  unverified_data<unsigned char *> fileBuff = newInSandbox<unsigned char>(sandbox, fsize + 1);
-  //only reading from a buffer, no verification necessary
-  if(!fread(fileBuff.sandbox_onlyVerifyAddress(), fsize, 1, infile))
-  {
-    return 1;
-  }
-
-  fileBuff[fsize] = 0;
-
-  for(unsigned i = 0; i < NUM_READS; i++) {
-
-  printf("i = %u\n", i);
-
-  if(!read_JPEG_file(fileBuff, fsize))
-  {
-    if(image_buffer)
-    {
-      freeInSandbox(sandbox, image_buffer);
-    }
-
-    printf("Reading file %s failed\n", argv[1]);
-    fflush(stdout);
-    return 1;
-  }
-
-  }
+  pthread_t threads[NUM_THREADS];
+  for(int t = 0; t < NUM_THREADS; t++) pthread_create(NULL, &threads[t], readJPEG, (void*)argv);
+  for(int t = 0; t < NUM_THREADS; t++) pthread_join(&threads[t]);
 
   #ifdef PRINT_FUNCTION_TIMES
-    #if defined(_WIN32)
-      printf("Read JPEG invocations = %I64d, time = %I64d ns\n", sandboxFuncOrCallbackInvocations.load(), timeSpentInJpeg.load());
-      printf("Read JPEG total time = %I64d ns\n", timeSpentOutsideJpeg.load());
-    #else
-      printf("Read JPEG invocations = %lld, time = %lld ns\n", sandboxFuncOrCallbackInvocations.load(), timeSpentInJpeg.load());
-      printf("Read JPEG total time = %lld ns\n", timeSpentOutsideJpeg.load());
-    #endif
+    printf("Read JPEG invocations per thread = %lld, time per thread = %lld ns\n", sandboxFuncOrCallbackInvocations.load() / NUM_THREADS, timeSpentInJpeg.load() / NUM_THREADS);
+    printf("Read JPEG total time per thread = %lld ns\n", timeSpentOutsideJpeg.load() / NUM_THREADS);
   #endif
 
   printf("Width: %d, Height: %d\n", image_width, image_height);
