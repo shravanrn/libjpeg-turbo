@@ -25,6 +25,8 @@
 
 #include "jpeglib.h"
 
+#define NUM_READS 100
+#define NUM_THREADS 1
 /*
  * <setjmp.h> is used for the optional error recovery mechanism shown in
  * the second part of the example.
@@ -155,10 +157,8 @@ sandbox_nacl_load_library_api(jpeglib)
 
 #ifdef USE_NACL
   #define TSandbox NaClSandbox
-  NaClSandbox* sandboxes[NUM_THREADS];
 #elif defined(USE_PROCESS)
   #define TSandbox JPEGProcessSandbox
-  JPEGProcessSandbox* sandboxes[NUM_THREADS];
 #else
 #error No sandbox type defined.
 #endif
@@ -433,8 +433,8 @@ int dynamicLoad(TSandbox* sandbox, char* path, char* libraryPath, char* maincore
 
   if(!sandbox)
   {
-    printf("Error creating sandbox");
-    return 0;
+    printf("Error creating sandbox\n");
+    abort();
   }
   initCPPApi(sandbox);
   START_PROGRAM_TIMER();
@@ -442,8 +442,7 @@ int dynamicLoad(TSandbox* sandbox, char* path, char* libraryPath, char* maincore
   return 1;
 }
 
-#define NUM_READS 100
-#define NUM_THREADS 10
+
 
 void* readJPEG(void* argv_vstar) {
 
@@ -459,26 +458,24 @@ void* readJPEG(void* argv_vstar) {
 #error No sandbox type defined.
 #endif
     printf("Dynamic load failed\n");
-    return 1;
+    return nullptr;
   }
 
   FILE* infile;
   if ((infile = fopen(argv[1], "rb")) == NULL) {
     fprintf(stderr, "can't open %s\n", argv[1]);
-    return 1;
+    return nullptr;
   }
 
   fseek(infile, 0, SEEK_END);
   unsigned long fsize = ftell(infile);
   fseek(infile, 0, SEEK_SET);  //same as rewind(infile);
 
-  TSandbox* sandbox = (TSandbox*) sandbox_vstar;
-
   unverified_data<unsigned char *> fileBuff = newInSandbox<unsigned char>(sandbox, fsize + 1);
   //only reading from a buffer, no verification necessary
   if(!fread(fileBuff.sandbox_onlyVerifyAddress(), fsize, 1, infile))
   {
-    return 1;
+    return nullptr;
   }
 
   fileBuff[fsize] = 0;
@@ -487,7 +484,7 @@ void* readJPEG(void* argv_vstar) {
 
     printf("i = %u\n", i);
 
-    if(!read_JPEG_file(fileBuff, fsize))
+    if(!read_JPEG_file(sandbox, fileBuff, fsize))
     {
       if(image_buffer)
       {
@@ -496,11 +493,14 @@ void* readJPEG(void* argv_vstar) {
 
       printf("Reading file %s failed\n", argv[1]);
       fflush(stdout);
-      return 1;
+      return nullptr;
     }
 
   }
 
+  fclose(infile);
+  freeInSandbox(sandbox, fileBuff);
+  freeInSandbox(sandbox, image_buffer);
   return NULL;
 }
 
@@ -521,9 +521,13 @@ int main(int argc, char** argv)
 
   printf("Starting\n");
 
+  
   pthread_t threads[NUM_THREADS];
-  for(int t = 0; t < NUM_THREADS; t++) pthread_create(NULL, &threads[t], readJPEG, (void*)argv);
-  for(int t = 0; t < NUM_THREADS; t++) pthread_join(&threads[t]);
+  for(int t = 0; t < NUM_THREADS; t++) pthread_create(&threads[t], NULL, readJPEG, (void*)argv);
+  for(int t = 0; t < NUM_THREADS; t++) { 
+    void* foo;
+    pthread_join(threads[t], &foo);
+  }
 
   #ifdef PRINT_FUNCTION_TIMES
     printf("Read JPEG invocations per thread = %lld, time per thread = %lld ns\n", sandboxFuncOrCallbackInvocations.load() / NUM_THREADS, timeSpentInJpeg.load() / NUM_THREADS);
@@ -532,10 +536,6 @@ int main(int argc, char** argv)
 
   printf("Width: %d, Height: %d\n", image_width, image_height);
 
-  freeInSandbox(sandbox, image_buffer);
-
-  fclose(infile);
-  freeInSandbox(sandbox, fileBuff);
   END_PROGRAM_TIMER();
 
   #ifdef PRINT_FUNCTION_TIMES
@@ -549,7 +549,7 @@ int main(int argc, char** argv)
   printf("Success\n");
 
   #if defined(USE_PROCESS)
-  sandbox->destroySandbox();
+  // sandbox->destroySandbox();
   #endif
   fflush(stdout);
   return 0;

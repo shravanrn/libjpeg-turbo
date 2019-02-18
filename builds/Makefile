@@ -40,7 +40,7 @@ OTHERSIDE_EXEC64_SIMD ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg64_
 # Core to pin main process (or only process) to, for the 'run' and 'debug' targets
 MAINCORE=1
 # Core to pin sandbox process to, for the 'run_dynamic_ps' and 'debug_dynamic_ps' targets
-SANDBOXCORE=5
+SANDBOXCORE=3
 
 # Default library process priority, for the 'run' and 'debug' targets
 DEFAULTLIBPRIO=0
