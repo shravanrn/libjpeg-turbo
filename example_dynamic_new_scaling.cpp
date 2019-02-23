@@ -17,18 +17,15 @@ using namespace rlbox;
   #include <dlfcn.h>
   #include "RLBox_DynLib.h"
   using TSandbox = RLBox_DynLib;
+#elif defined(USE_NACL)
+  #include "dyn_ldr_lib.h"
+  #include "RLBox_NaCl.h"
+  using TSandbox = RLBox_NaCl;
 #else
   #error "No sandbox num choice"
 #endif
 
 rlbox_load_library_api(jpeglib, TSandbox)
-  
-// high_resolution_clock::time_point EnterTime;
-// high_resolution_clock::time_point ExitTime;
-
-// #define START_TIMER() EnterTime = high_resolution_clock::now()
-// #define END_TIMER()   ExitTime = high_resolution_clock::now(); \
-//   timeSpentInJpeg+= duration_cast<nanoseconds>(ExitTime - EnterTime).count()
 
 void __attribute__ ((noinline)) put_scanline_someplace(tainted<JSAMPROW, TSandbox> rowBuffer, tainted<unsigned int, TSandbox> row_stride)
 {
@@ -37,7 +34,8 @@ void __attribute__ ((noinline)) put_scanline_someplace(tainted<JSAMPROW, TSandbo
 
 void my_error_exit (RLBoxSandbox<TSandbox>* sandbox, tainted<j_common_ptr, TSandbox> cinfo)
 {
-  abort();
+  fflush(stdout);
+  exit(1);
 }
 
 struct runTestParams {
@@ -47,6 +45,7 @@ struct runTestParams {
   unsigned char * const fileBuff;
   unsigned long const fsize;
   std::atomic<long long> timeSpentInJpeg;
+  std::atomic<unsigned int> count;
 };
 
 void* read_JPEG_file (void* testParams)
@@ -54,6 +53,8 @@ void* read_JPEG_file (void* testParams)
   runTestParams* testParamsC = (runTestParams*) testParams;
   bool infinite = testParamsC->decodeCount == -1;
   auto sandbox = RLBoxSandbox<TSandbox>::createSandbox(testParamsC->runtimePath, testParamsC->libraryPath);
+  testParamsC->count++;
+  printf("Created sandbox %d\n", testParamsC->count.load());
   auto cb = sandbox->createCallback(my_error_exit);
 
   auto fileBuffCopy = sandbox->mallocInSandbox<unsigned char>(testParamsC->fsize);
@@ -129,6 +130,19 @@ int main(int argc, char** argv)
   sscanf(argv[4], "%u", &sandboxCount);
   sscanf(argv[5], "%d", &decodeCount);
 
+  printf("Creating test for "
+    #if defined(USE_DYN)
+      "DynLib"
+    #elif defined(USE_NACL)
+      "NaCl"
+    #else
+      #error "No sandbox num choice"
+    #endif
+    " , sandbox count: %u, decode count: %d\n",
+    sandboxCount,
+    decodeCount
+  );
+
   FILE* infile;
   if ((infile = fopen(inputImage, "rb")) == NULL) {
     fprintf(stderr, "can't open %s\n", inputImage);
@@ -155,7 +169,8 @@ int main(int argc, char** argv)
     decodeCount,
     fileBuff,
     fsize,
-    {0} // timespent
+    {0}, // timespent
+    {0} // count
   };
 
   if (sandboxCount == 1)
@@ -173,6 +188,10 @@ int main(int argc, char** argv)
         printf("Error creating thread %d\n", i);
         exit(1);
       }
+
+      char name[100];
+      sprintf(name, "Sbox %u", i);
+      pthread_setname_np(threads[i], name);
     }
 
     for(unsigned i = 0; i < sandboxCount; i++)

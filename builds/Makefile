@@ -230,7 +230,16 @@ $(BUILDS64)/example_dynamic_nacl_simd_safe_api : $(BUILDS64)/example_dynamic_nac
 	$(CXX) $(CFLAGS64) $< -o $@ $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
 
 $(BUILDS64)/example_dynamic_new_scaling_dyn : ../example_dynamic_new_scaling.cpp
-	$(CXX) $(CFLAGS64) -std=c++14 -fPIC -DUSE_DYN -I$(BUILDS64)/nacl_build_simd -I$(RLBOX_DIR) $< -o $@ -lpthread -ldl
+	$(CXX) $(CFLAGS64) -std=c++14 -fPIC -DUSE_DYN -I$(BUILDS64)/non_nacl_build_simd -I$(RLBOX_DIR) $< -o $@ -lpthread -ldl
+
+$(BUILDS64)/example_dynamic_new_scaling_nacl : ../example_dynamic_new_scaling.cpp
+	$(CXX) $(CFLAGS64) -std=c++14 -fPIC -DUSE_NACL -I$(BUILDS64)/nacl_build_simd -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ -I$(RLBOX_DIR) $< -o $@ -lpthread $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
+
+$(BUILDS64)/example_dynamic_new_scaling_create_dyn : ../example_dynamic_new_scaling_create.cpp
+	$(CXX) $(CFLAGS64) -std=c++14 -fPIC -DUSE_DYN -I$(BUILDS64)/non_nacl_build_simd -I$(RLBOX_DIR) $< -o $@ -lpthread -ldl
+
+$(BUILDS64)/example_dynamic_new_scaling_create_nacl : ../example_dynamic_new_scaling_create.cpp
+	$(CXX) $(CFLAGS64) -std=c++14 -fPIC -DUSE_NACL -I$(BUILDS64)/nacl_build_simd -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ -I$(RLBOX_DIR) $< -o $@ -lpthread $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
 
 $(BUILDS64)/scaling_benchmark_nacl : ../scaling_benchmark.cpp
 	$(CXX) -c $(CFLAGS64) -std=c++11 -fPIC -DUSE_NACL -I$(BUILDS64)/nacl_build_simd -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@.o
@@ -375,9 +384,25 @@ $(BUILDS64)/run_dynamic_new_scaling_dyn_test: $(BUILDS64)/example_dynamic_new_sc
 	echo && echo run_dynamic_new_scaling_dyn 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_new_scaling_dyn ../test.jpeg "" ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so 1 1
 
-$(BUILDS64)/run_dynamic_new_scaling_dyn_bench_single: $(BUILDS64)/example_dynamic_new_scaling_dyn
+$(BUILDS64)/run_dynamic_new_scaling_dyn_bench_max: $(BUILDS64)/example_dynamic_new_scaling_dyn
 	echo && echo run_dynamic_new_scaling_dyn 64-bit: && echo && \
-	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_new_scaling_dyn ../test.jpeg "" ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so 10 1
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_new_scaling_dyn ../test.jpeg "" ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so 1000 -1
+
+$(BUILDS64)/run_dynamic_new_scaling_nacl_bench_test: $(BUILDS64)/example_dynamic_new_scaling_nacl
+	echo && echo run_dynamic_new_scaling_nacl 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_new_scaling_nacl ../test.jpeg $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe 1 1
+
+$(BUILDS64)/run_dynamic_new_scaling_nacl_bench_max: $(BUILDS64)/example_dynamic_new_scaling_nacl
+	echo && echo run_dynamic_new_scaling_nacl 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_new_scaling_nacl ../test.jpeg $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe 100 -1
+
+$(BUILDS64)/run_dynamic_new_scaling_create_dyn_test: $(BUILDS64)/example_dynamic_new_scaling_create_dyn
+	echo && echo run_dynamic_new_scaling_create_dyn 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_new_scaling_create_dyn "" ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so
+
+$(BUILDS64)/run_dynamic_new_scaling_create_nacl_bench_test: $(BUILDS64)/example_dynamic_new_scaling_create_nacl
+	echo && echo run_dynamic_new_scaling_create_nacl 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_new_scaling_create_nacl $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe
 
 $(BUILDS32)/dbg_dynamic_non_nacl : debug $(BUILDS32)/run_dynamic_non_nacl
 $(BUILDS32)/dbg_dynamic_non_nacl_simd : debug $(BUILDS32)/run_dynamic_non_nacl_simd
