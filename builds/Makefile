@@ -30,6 +30,7 @@ EMCC=emcc
 EMCC_LD=emcc
 EMAR=emar
 WASM_SANDBOX_DIR=$(shell realpath ../../wasm-sandboxing)
+RLBOX_DIR=$(shell realpath ../../rlbox_api)
 
 # paths to the appropriate ProcessSandbox_otherside executables
 OTHERSIDE_EXEC32 ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg32
@@ -228,6 +229,9 @@ $(BUILDS64)/example_dynamic_nacl_safe_api : $(BUILDS64)/example_dynamic_nacl_saf
 $(BUILDS64)/example_dynamic_nacl_simd_safe_api : $(BUILDS64)/example_dynamic_nacl_simd_safe_api.o
 	$(CXX) $(CFLAGS64) $< -o $@ $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
 
+$(BUILDS64)/example_dynamic_new_scaling_dyn : ../example_dynamic_new_scaling.cpp
+	$(CXX) $(CFLAGS64) -std=c++14 -fPIC -DUSE_DYN -I$(BUILDS64)/nacl_build_simd -I$(RLBOX_DIR) $< -o $@ -lpthread -ldl
+
 $(BUILDS64)/scaling_benchmark_nacl : ../scaling_benchmark.cpp
 	$(CXX) -c $(CFLAGS64) -std=c++11 -fPIC -DUSE_NACL -I$(BUILDS64)/nacl_build_simd -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ $< -o $@.o
 	$(CXX) $(CFLAGS64) $@.o -o $@ $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
@@ -366,6 +370,14 @@ $(BUILDS64)/run_scaling_benchmark_ps: $(BUILDS64)/scaling_benchmark_ps kill_old_
 $(BUILDS64)/run_scaling_benchmark_none: $(BUILDS64)/scaling_benchmark_none kill_old_processes
 	echo && echo run_scaling_benchmark_none 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_none $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
+
+$(BUILDS64)/run_dynamic_new_scaling_dyn_test: $(BUILDS64)/example_dynamic_new_scaling_dyn
+	echo && echo run_dynamic_new_scaling_dyn 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_new_scaling_dyn ../test.jpeg "" ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so 1 1
+
+$(BUILDS64)/run_dynamic_new_scaling_dyn_bench_single: $(BUILDS64)/example_dynamic_new_scaling_dyn
+	echo && echo run_dynamic_new_scaling_dyn 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_new_scaling_dyn ../test.jpeg "" ./$(BUILDS64)/non_nacl_build_simd/.libs/libjpeg.so 10 1
 
 $(BUILDS32)/dbg_dynamic_non_nacl : debug $(BUILDS32)/run_dynamic_non_nacl
 $(BUILDS32)/dbg_dynamic_non_nacl_simd : debug $(BUILDS32)/run_dynamic_non_nacl_simd
