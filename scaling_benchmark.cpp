@@ -407,7 +407,10 @@ void setup(const char* isolationFramework, const char* libraryPath, const char* 
     printf("Bad sandboxcore argument\n");
     exit(1);
   }
-  sandbox = new JPEGProcessSandbox(libraryPath, maincore, sbcore, sbpriority);
+  sandbox = new JPEGProcessSandbox(libraryPath, maincore, sbcore);
+  #if defined(USE_PROCESS_SPIN)
+    sandbox->makeActiveSandbox();
+  #endif
   initCPPApi(sandbox);
 #else
 #endif
@@ -474,7 +477,7 @@ int main(int argc, char const *argv[])
 			printf("Expected arg libjpeg.nexe naclIrtPath\n");
 			exit(1);
 		}
-		setup(argv[2], argv[1], nullptr, nullptr);
+		setup(argv[2], argv[1], nullptr, nullptr, 0);
 	#elif defined(USE_PROCESS)
 		if(argc < 5)
 		{

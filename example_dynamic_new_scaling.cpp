@@ -35,7 +35,7 @@ void __attribute__ ((noinline)) put_scanline_someplace(tainted<JSAMPROW, TSandbo
 void my_error_exit (RLBoxSandbox<TSandbox>* sandbox, tainted<j_common_ptr, TSandbox> cinfo)
 {
   fflush(stdout);
-  exit(1);
+  abort();
 }
 
 struct runTestParams {

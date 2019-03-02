@@ -41,7 +41,7 @@ OTHERSIDE_EXEC64_SIMD ?= $(PROCESS_SANDBOX_DIR)/ProcessSandbox_otherside_jpeg64_
 # Core to pin main process (or only process) to, for the 'run' and 'debug' targets
 MAINCORE=1
 # Core to pin sandbox process to, for the 'run_dynamic_ps' and 'debug_dynamic_ps' targets
-SANDBOXCORE=5
+SANDBOXCORE=3
 
 # Default library process priority, for the 'run' and 'debug' targets
 DEFAULTLIBPRIO=0
@@ -51,7 +51,7 @@ ALLBUILDS32=$(addprefix $(BUILDS32)/,$(BUILDS_BASENAMES)) $(addprefix $(BUILDS32
 ALLBUILDS64=$(addprefix $(BUILDS64)/,$(BUILDS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd,$(BUILDS_BASENAMES)))
 PRODUCTS_BASENAMES=example_dynamic_non_nacl example_dynamic_nacl example_dynamic_ps
 PRODUCTS32=$(addprefix $(BUILDS32)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS32)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES)))
-PRODUCTS64=$(addprefix $(BUILDS64)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES))) $(addprefix $(BUILDS64)/,$(addsuffix _safe_api, $(PRODUCTS_BASENAMES))) $(addprefix $(BUILDS64)/,$(addsuffix _simd_safe_api, $(PRODUCTS_BASENAMES))) $(BUILDS64)/scaling_benchmark_nacl $(BUILDS64)/scaling_benchmark_ps
+PRODUCTS64=$(addprefix $(BUILDS64)/,$(PRODUCTS_BASENAMES)) $(addprefix $(BUILDS64)/,$(addsuffix _simd, $(PRODUCTS_BASENAMES))) $(addprefix $(BUILDS64)/,$(addsuffix _safe_api, $(PRODUCTS_BASENAMES))) $(addprefix $(BUILDS64)/,$(addsuffix _simd_safe_api, $(PRODUCTS_BASENAMES))) $(BUILDS64)/scaling_benchmark_nacl $(BUILDS64)/scaling_benchmark_ps $(BUILDS64)/scaling_benchmark_ps_spin
 PRODUCTS=$(PRODUCTS32) $(PRODUCTS64)
 
 RUN_BASENAMES=run_dynamic_non_nacl run_dynamic_non_nacl_simd run_dynamic_nacl run_dynamic_nacl_simd run_dynamic_nacl_safe_api run_dynamic_nacl_simd_safe_api run_dynamic_ps run_dynamic_ps_simd run_dynamic_ps_safe_api run_dynamic_ps_simd_safe_api
@@ -210,6 +210,7 @@ $(BUILDS64)/example_dynamic_nacl_simd_safe_api.o : ../example_dynamic_safe_api.c
 
 FLAGS_WHEN_LINKING_NACL_EXAMPLES_32 = -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -fPIC -Wl,-rpath=$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-32/lib -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_32 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_32 -lrt -lpthread
 FLAGS_WHEN_LINKING_NACL_EXAMPLES_64 = -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -fPIC -Wl,-rpath=$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-64/lib -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/opt-linux-x86-64/lib -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_64 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_64 -lrt -lpthread
+FLAGS_WHEN_LINKING_NACL_EXAMPLES_64_DEBUG = -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -fPIC -Wl,-rpath=$(SANDBOXING_NACL_DIR)/native_client/scons-out/dbg-linux-x86-64/lib -L$(SANDBOXING_NACL_DIR)/native_client/scons-out/dbg-linux-x86-64/lib -ldyn_ldr -lsel -lnacl_error_code -lenv_cleanser -lnrd_xfer -lnacl_perf_counter -lnacl_base -limc -lnacl_fault_inject -lnacl_interval -lplatform_qual_lib -lvalidators -ldfa_validate_caller_x86_64 -lcpu_features -lvalidation_cache -lplatform -lgio -lnccopy_x86_64 -lrt -lpthread
 
 $(BUILDS32)/example_dynamic_nacl : $(BUILDS32)/example_dynamic_nacl.o
 	$(CXX) $(CFLAGS32) $< -o $@ $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_32)
@@ -234,6 +235,9 @@ $(BUILDS64)/example_dynamic_new_scaling_dyn : ../example_dynamic_new_scaling.cpp
 
 $(BUILDS64)/example_dynamic_new_scaling_nacl : ../example_dynamic_new_scaling.cpp
 	$(CXX) $(CFLAGS64) -std=c++14 -fPIC -DUSE_NACL -I$(BUILDS64)/nacl_build_simd -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ -I$(RLBOX_DIR) $< -o $@ -lpthread $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64)
+
+$(BUILDS64)/example_dynamic_new_scaling_nacl_dbg : ../example_dynamic_new_scaling.cpp
+	$(CXX) -fPIC -m64 -g -O3 -std=c++14 -fPIC -DUSE_NACL -I$(BUILDS64)/nacl_build_simd -I$(SANDBOXING_NACL_DIR)/native_client/src/trusted/dyn_ldr/ -I$(RLBOX_DIR) $< -o $@ -lpthread $(FLAGS_WHEN_LINKING_NACL_EXAMPLES_64_DEBUG)
 
 $(BUILDS64)/example_dynamic_new_scaling_create_dyn : ../example_dynamic_new_scaling_create.cpp
 	$(CXX) $(CFLAGS64) -std=c++14 -fPIC -DUSE_DYN -I$(BUILDS64)/non_nacl_build_simd -I$(RLBOX_DIR) $< -o $@ -lpthread -ldl
@@ -292,6 +296,10 @@ $(BUILDS64)/example_dynamic_wasm : $(BUILDS64)/example_dynamic_wasm.o $(WASM_SAN
 
 $(BUILDS64)/scaling_benchmark_ps : ../scaling_benchmark.cpp
 	$(CXX) -c $(CFLAGS64) -std=c++11 -DUSE_PROCESS -I.. -I$(BUILDS64)/non_nacl_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@.o
+	$(CXX) $(CFLAGS64) $@.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a -o $@ -lrt -lpthread
+
+$(BUILDS64)/scaling_benchmark_ps_spin : ../scaling_benchmark.cpp
+	$(CXX) -c $(CFLAGS64) -std=c++11 -DUSE_PROCESS -DUSE_PROCESS_SPIN -I.. -I$(BUILDS64)/non_nacl_build_simd -I$(PROCESS_SANDBOX_DIR) -DUSE_LIBJPEG $< -o $@.o
 	$(CXX) $(CFLAGS64) $@.o $(PROCESS_SANDBOX_DIR)/libProcessSandbox_jpeg64.a -o $@ -lrt -lpthread
 
 $(BUILDS32)/run_dynamic_non_nacl : $(BUILDS32)/example_dynamic_non_nacl kill_old_processes
@@ -376,6 +384,10 @@ $(BUILDS64)/run_scaling_benchmark_ps: $(BUILDS64)/scaling_benchmark_ps kill_old_
 	echo && echo run_scaling_benchmark_ps 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_ps $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE) $(DEFAULTLIBPRIO)
 
+$(BUILDS64)/run_scaling_benchmark_ps_spin: $(BUILDS64)/scaling_benchmark_ps_spin kill_old_processes
+	echo && echo run_scaling_benchmark_ps_spin 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_ps_spin $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE) $(DEFAULTLIBPRIO)
+
 $(BUILDS64)/run_scaling_benchmark_none: $(BUILDS64)/scaling_benchmark_none kill_old_processes
 	echo && echo run_scaling_benchmark_none 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/scaling_benchmark_none $(OTHERSIDE_EXEC64_SIMD) $(MAINCORE) $(SANDBOXCORE)
@@ -395,6 +407,10 @@ $(BUILDS64)/run_dynamic_new_scaling_nacl_bench_test: $(BUILDS64)/example_dynamic
 $(BUILDS64)/run_dynamic_new_scaling_nacl_bench_max: $(BUILDS64)/example_dynamic_new_scaling_nacl
 	echo && echo run_dynamic_new_scaling_nacl 64-bit: && echo && \
 	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_new_scaling_nacl ../test.jpeg $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe 100 -1
+
+$(BUILDS64)/run_dynamic_new_scaling_nacl_dbg_bench_max: $(BUILDS64)/example_dynamic_new_scaling_nacl_dbg
+	echo && echo run_dynamic_new_scaling_nacl_dbg 64-bit: && echo && \
+	taskset -c $(MAINCORE) $(GDB) ./$(BUILDS64)/example_dynamic_new_scaling_nacl_dbg ../test.jpeg $(SANDBOXING_NACL_DIR)/native_client/scons-out/nacl_irt-x86-64/staging/irt_core.nexe ./$(BUILDS64)/nacl_build_simd/mainCombine/libjpeg.nexe 100 -1
 
 $(BUILDS64)/run_dynamic_new_scaling_create_dyn_test: $(BUILDS64)/example_dynamic_new_scaling_create_dyn
 	echo && echo run_dynamic_new_scaling_create_dyn 64-bit: && echo && \
