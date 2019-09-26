@@ -28,7 +28,17 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <setjmp.h>
+// #include <setjmp.h>
+#include<stdlib.h>
+typedef void* jmp_buf;
+static void longjmp (jmp_buf env, int val)
+{
+	abort();
+}
+static int setjmp (jmp_buf env)
+{
+	return 0;
+}
 #include <errno.h>
 #include "cdjpeg.h"
 #include <jpeglib.h>

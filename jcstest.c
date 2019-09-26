@@ -32,7 +32,17 @@
 #include <stdio.h>
 #include <jpeglib.h>
 #include <jerror.h>
-#include <setjmp.h>
+// #include <setjmp.h>
+#include<stdlib.h>
+typedef void* jmp_buf;
+static void longjmp (jmp_buf env, int val)
+{
+	abort();
+}
+static int setjmp (jmp_buf env)
+{
+	return 0;
+}
 
 #ifndef JCS_EXTENSIONS
 #define JCS_EXT_RGB 6
