@@ -36,3 +36,5 @@ lib_example_dynamic_non_nacl.so
 /example_dynamic_non_nacl_64
 /example_static_32
 /example_static_64
+/.vscode/
+**/native_wasm_test/
